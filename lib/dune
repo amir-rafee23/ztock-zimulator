@@ -1,2 +1,4 @@
-(executable
-(name portfolio))
+(library
+ (name stocks)
+ (public_name Stocks)
+ (libraries str))

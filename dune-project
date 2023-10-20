@@ -1,1 +1,3 @@
-(lang dune 3.4)
+(lang dune 3.10)
+
+(name stocks)
