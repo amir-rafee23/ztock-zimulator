@@ -20,13 +20,21 @@ module type PortfolioType = sig
   (** Returns the prices of a stock over time, specifically, from the most
       recent time when the stock went from being absent to present in the
       portfolio, to when this function is called. Returns the empty list if and
-      only if the stock is not in the portfolio. *)
+      only if the stock is not in the portfolio.
+
+      Requires: quantity of stoack to be added >= 0. *)
 
   val add_stock : 'a t -> string -> int -> 'a t
   (** Add a stock and the quantity purchased to the portfolio. *)
 
-  val remove_stock : 'a t -> string -> 'a t
-  (** Remove a stock from the portfolio. *)
+  val remove_stock : 'a t -> string -> int -> 'a t
+  (** Remove a certain quantity of a certain stock from the portfolio. If the
+      stock is not in the portfolio, returns the unchanged portfolio. If the
+      quantity of stock to be removed is equal to the initial quantity, the
+      stock is completely removed from the portfolio. If the quantity of stock
+      to be removed is greater than the initial quantity, raises [Failure].
+
+      Requires: quantity of stock to be removed >= 0.*)
 
   val display_portfolio : 'a t -> string
   (** Returns a "pretty-printer" string to display the portfolio. *)

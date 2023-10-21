@@ -7,7 +7,7 @@ module type PortfolioType = sig
   val quantity_stock : 'a t -> string -> int
   val stock_price_over_time : 'a t -> string -> int list
   val add_stock : 'a t -> string -> int -> 'a t
-  val remove_stock : 'a t -> string -> 'a t
+  val remove_stock : 'a t -> string -> int -> 'a t
   val display_portfolio : 'a t -> string
   val cost_basis : 'a t -> string -> int option
 end
@@ -44,12 +44,6 @@ module UserPortfolio : PortfolioType = struct
     sell_batches : batches_element_data list;
   }
 
-  (* Doing this to remove compiler errors. *)
-  (* let x = { price = 1; quantity = 1; date = "date" }
-
-     let y = { quantity = 2; initial_buy_date = "date2"; buy_batches = [];
-     sell_batches = []; } *)
-
   type 'a t = stock_data String_map.t
 
   let empty_portfolio = String_map.empty
@@ -57,12 +51,116 @@ module UserPortfolio : PortfolioType = struct
   let contains_stock (portfolio : 'a t) (stock : string) =
     String_map.mem stock portfolio
 
-  let quantity_stock = failwith "unimplemented"
-  let stock_price_over_time = failwith "unimplemented"
-  let add_stock = failwith "Unimplemented"
-  let remove_stock = failwith "unimplemented"
-  let display_portfolio = failwith "unimplemented"
-  let cost_basis = failwith "unimplemented"
+  let quantity_stock (portfolio : 'a t) (stock : string) : int =
+    let data = String_map.find_opt stock portfolio in
+    match data with
+    (* [stock] not in portfolio. *)
+    | None -> 0
+    (* [stock] in portfolio. *)
+    | Some x -> x.quantity
+
+  let stock_price_over_time (portfolio : 'a t) (stock : string) : int list =
+    failwith "unimplemented"
+
+  let add_stock (portfolio : 'a t) (stock : string) (qty : int) : 'a t =
+    (* Precondition. *)
+    assert (qty >= 0);
+
+    (* Check if [stock] is in [portfolio]. *)
+    if String_map.mem stock portfolio = false then
+      (* Initialize the stock's data (its corresponding value). *)
+
+      (* Quantity of the stock. *)
+      let q = qty in
+
+      (* Set [initial_buy_date]. *)
+      let i = "TODO" in
+
+      (* TODO: Add real-time price. *)
+
+      (* Initialize [buy_batches]. *)
+      let b = [ { price = 0; quantity = q; date = i } ] in
+
+      (* Initialize [sell_batches]. *)
+      let s = [] in
+
+      (* The stock's data. *)
+      let data =
+        {
+          quantity = q;
+          initial_buy_date = i;
+          buy_batches = b;
+          sell_batches = s;
+        }
+      in
+
+      (* Create the binding. *)
+      String_map.add stock data portfolio
+    else
+      (* [stock] already in portfolio. Need to update the stock's data. Only the
+         quantity and buy batches are changed. *)
+
+      (* New quantity of the stock. *)
+      let q = quantity_stock portfolio stock + qty in
+
+      (* New [buy_batches]. *)
+      let old_b = (String_map.find stock portfolio).buy_batches in
+      (* TODO: Real-time price, date.*)
+      let b = old_b @ [ { price = 0; quantity = q; date = "TODO" } ] in
+
+      (* New stock data. *)
+      let old_data = String_map.find stock portfolio in
+
+      let new_data = { old_data with quantity = q; buy_batches = b } in
+
+      (* Update the binding. *)
+      String_map.add stock new_data portfolio
+
+  let remove_stock (portfolio : 'a t) (stock : string) (qty : int) : 'a t =
+    (* Precondition. *)
+    assert (qty >= 0);
+
+    (* Check if [stock] is in [portfolio.] *)
+    if
+      String_map.mem stock portfolio = false
+      (* Not in portfolio. Return unchanged portfolio. *)
+    then portfolio
+    else if
+      (* In portfolio. Check if the quantity to be removed exceeds the initial
+         quantity. *)
+      qty > (String_map.find stock portfolio).quantity
+    then
+      failwith
+        ("Quantity of " ^ stock ^ "to be removed exceeds initial quantity held!")
+    else
+      (* Need to update the stock data. Only quantity, sell_batches are
+         changed. *)
+
+      (* New quantity. *)
+      let q = (String_map.find stock portfolio).quantity - qty in
+
+      (* If new quantity is 0, then remove stock from the portfolio and
+         return. *)
+      if q = 0 then String_map.remove stock portfolio
+      else
+        (* New sell_batches. *)
+        (*TODO: price*)
+        let s =
+          (String_map.find stock portfolio).sell_batches
+          @ [ { price = 0; quantity = qty; date = "TODO" } ]
+        in
+
+        (* New stock data. *)
+        let old_data = String_map.find stock portfolio in
+        let data = { old_data with quantity = q; sell_batches = s } in
+
+        (* Update binding. *)
+        String_map.add stock data portfolio
+
+  let display_portfolio (portfolio : 'a t) : string = failwith "unimplemented"
+
+  let cost_basis (portfolio : 'a t) (stock : string) : int option =
+    failwith "unimplemented"
 end
 
 (* TODO: *)
