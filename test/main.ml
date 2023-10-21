@@ -20,6 +20,7 @@ let add_stock_test_portfolio_2 =
 let add_stock_test_portfolio_3 =
   Test_Portfolio.add_stock add_stock_test_portfolio_2 "FB" 6
 
+(* TODO: More comprehensive tests. *)
 (* Also tests [quantity_stock] and [contains_stock]. *)
 let add_stock_tests =
   [
@@ -69,6 +70,7 @@ let remove_stock_test_portfolio3 =
 let remove_stock_test_portfolio4 =
   Test_Portfolio.remove_stock remove_stock_test_portfolio2 "AAPL" 10
 
+(* TODO: More comprehensive tests. *)
 let remove_stock_tests =
   [
     ( "Removing a stock s from an empty portfolio - presence of s. " >:: fun _ ->

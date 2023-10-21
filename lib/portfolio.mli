@@ -36,8 +36,11 @@ module type PortfolioType = sig
 
       Requires: quantity of stock to be removed >= 0.*)
 
+  (* TODO: Also display current portfolio's value. Need a function for that.*)
   val display_portfolio : 'a t -> string
-  (** Returns a "pretty-printer" string to display the portfolio. *)
+  (** Returns a "pretty-printer" string to display the portfolio. For each stock
+      in the portfolio, displays: stock name, quantity, current price, current
+      total holding value, initial buy date.*)
 
   val cost_basis : 'a t -> string -> int option
   (** The cost-basis of a certain stock held in a portfolio. Returns [None] if

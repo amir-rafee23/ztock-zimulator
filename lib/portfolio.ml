@@ -64,6 +64,7 @@ module UserPortfolio : PortfolioType = struct
 
   let add_stock (portfolio : 'a t) (stock : string) (qty : int) : 'a t =
     (* Precondition. *)
+    (* TODO: Add descriptive error message. *)
     assert (qty >= 0);
 
     (* Check if [stock] is in [portfolio]. *)
@@ -157,7 +158,32 @@ module UserPortfolio : PortfolioType = struct
         (* Update binding. *)
         String_map.add stock data portfolio
 
-  let display_portfolio (portfolio : 'a t) : string = failwith "unimplemented"
+  let rec display_portfolio (portfolio : 'a t) : string =
+    (* Stocks held in [portfolio]. *)
+    let stocks = String_map.bindings portfolio in
+
+    match stocks with
+    | [] -> "Portfolio is empty."
+    | (stock, data) :: t ->
+        (* Data on [stock]. *)
+        let str =
+          Printf.sprintf
+            "STOCK: %s\n\
+             Quantity: %i\n\
+             Current price: TODO (float)\n\
+             Initial buy date: %s\n\
+             Current total holding value: TODO%!" stock data.quantity
+            data.initial_buy_date
+        in
+        (* Handle possibly printing more stocks. *)
+        if t = [] then str
+        else
+          (* More stocks to be printed. *)
+          let remaining_portfolio = String_map.remove stock portfolio in
+          str ^ "\n\n" ^ display_portfolio remaining_portfolio
+
+  (* For each stock in [portfolio], display: name, quantity, current price,
+     initial date bought at, current total holding value*)
 
   let cost_basis (portfolio : 'a t) (stock : string) : int option =
     failwith "unimplemented"
