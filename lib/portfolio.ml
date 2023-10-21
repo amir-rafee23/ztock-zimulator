@@ -1,3 +1,5 @@
+open Unix
+
 (** The signature of a user's portfolio. *)
 module type PortfolioType = sig
   type 'a t
@@ -29,17 +31,21 @@ module UserPortfolio : PortfolioType = struct
       A buy/sell batch contains information regarding quantity, price, date, and
       order type (buy/sell). Separate function to calculate cost-basis (net
       amount of money spent to get that quantity of shares / total number of
-      current shares). .*)
+      current shares).
+
+      Note that all dates/times used are in epoch time. *)
 
   type batches_element_data = {
     price : int;
     quantity : int;
-    date : string;
+    (* Epoch time.*)
+    date : float;
   }
 
   type stock_data = {
     quantity : int;
-    initial_buy_date : string;
+    (* Epoch time. *)
+    initial_buy_date : float;
     buy_batches : batches_element_data list;
     sell_batches : batches_element_data list;
   }
@@ -69,13 +75,13 @@ module UserPortfolio : PortfolioType = struct
 
     (* Check if [stock] is in [portfolio]. *)
     if String_map.mem stock portfolio = false then
-      (* Initialize the stock's data (its corresponding value). *)
+      (* Initialize the stock's data (the value in the portfolio Map). *)
 
       (* Quantity of the stock. *)
       let q = qty in
 
       (* Set [initial_buy_date]. *)
-      let i = "TODO" in
+      let i = Unix.time () in
 
       (* TODO: Add real-time price. *)
 
@@ -106,8 +112,8 @@ module UserPortfolio : PortfolioType = struct
 
       (* New [buy_batches]. *)
       let old_b = (String_map.find stock portfolio).buy_batches in
-      (* TODO: Real-time price, date.*)
-      let b = old_b @ [ { price = 0; quantity = q; date = "TODO" } ] in
+      (* TODO: Real-time price.*)
+      let b = old_b @ [ { price = 0; quantity = q; date = Unix.time () } ] in
 
       (* New stock data. *)
       let old_data = String_map.find stock portfolio in
@@ -148,7 +154,7 @@ module UserPortfolio : PortfolioType = struct
         (*TODO: price*)
         let s =
           (String_map.find stock portfolio).sell_batches
-          @ [ { price = 0; quantity = qty; date = "TODO" } ]
+          @ [ { price = 0; quantity = qty; date = Unix.time () } ]
         in
 
         (* New stock data. *)
@@ -166,14 +172,26 @@ module UserPortfolio : PortfolioType = struct
     | [] -> "Portfolio is empty."
     | (stock, data) :: t ->
         (* Data on [stock]. *)
+
+        (* Determine the string representation of the epoch initial buy date.
+           Month/Day/Year is the output format. *)
+        let local_time = Unix.localtime data.initial_buy_date in
+        let str_time =
+          (local_time.tm_mon |> string_of_int)
+          ^ "/"
+          ^ (local_time.tm_mday |> string_of_int)
+          ^ "/"
+          (*tm_year gives the year - 1900*)
+          ^ (local_time.tm_year + 1900 |> string_of_int)
+        in
+
         let str =
           Printf.sprintf
             "STOCK: %s\n\
              Quantity: %i\n\
              Current price: TODO (float)\n\
              Initial buy date: %s\n\
-             Current total holding value: TODO%!" stock data.quantity
-            data.initial_buy_date
+             Current total holding value: TODO%!" stock data.quantity str_time
         in
         (* Handle possibly printing more stocks. *)
         if t = [] then str
@@ -181,9 +199,6 @@ module UserPortfolio : PortfolioType = struct
           (* More stocks to be printed. *)
           let remaining_portfolio = String_map.remove stock portfolio in
           str ^ "\n\n" ^ display_portfolio remaining_portfolio
-
-  (* For each stock in [portfolio], display: name, quantity, current price,
-     initial date bought at, current total holding value*)
 
   let cost_basis (portfolio : 'a t) (stock : string) : int option =
     failwith "unimplemented"

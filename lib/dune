@@ -1,4 +1,4 @@
 (library
  (name stocks)
  (public_name Stocks)
- (libraries str))
+ (libraries str unix))
