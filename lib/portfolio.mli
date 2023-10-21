@@ -22,10 +22,18 @@ module type PortfolioType = sig
       portfolio, to when this function is called. Returns the empty list if and
       only if the stock is not in the portfolio. *)
 
+  (* TODO: Add an optional argument [time] to add_stock and remove_stock, mainly
+     to enable better testing.
+
+     Optional argument [time]: the epoch time associated with the stock addition
+     to the portfolio. If an argument not provided, default value is the time
+     the function is called. *)
+
   val add_stock : 'a t -> string -> int -> 'a t
-  (** Add a stock and the quantity purchased to the portfolio. The time
-      associated with a stock addition to a portfolio is the time this function
-      is called.
+  (** Add a stock and the quantity purchased to the portfolio.
+
+      The time associated with a stock addition to a portfolio is the time this
+      function is called.
 
       Requires: quantity of stoack to be added >= 0.*)
 

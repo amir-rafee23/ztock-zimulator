@@ -177,7 +177,8 @@ module UserPortfolio : PortfolioType = struct
            Month/Day/Year is the output format. *)
         let local_time = Unix.localtime data.initial_buy_date in
         let str_time =
-          (local_time.tm_mon |> string_of_int)
+          (* tm_mon gives the month - 1*)
+          (local_time.tm_mon + 1 |> string_of_int)
           ^ "/"
           ^ (local_time.tm_mday |> string_of_int)
           ^ "/"
@@ -210,7 +211,5 @@ end
    then ping the API to get the price at each of those dates and output the
    results in a list. Returns the empty list only if the stock is not in the
    portfolio. *)
-
-(* Epoch time. to_epoch. *)
 
 (* Worry about the cost-basis function later. *)

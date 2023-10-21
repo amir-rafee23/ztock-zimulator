@@ -107,6 +107,34 @@ let remove_stock_tests =
         (Test_Portfolio.contains_stock remove_stock_test_portfolio4 "AAPL") );
   ]
 
+(* Portfolios used to test [stock_price_over_time]. *)
+let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
+
+let stock_price_over_time_test_portfolio2 =
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "FB" 10
+
+let stock_price_over_time_tests =
+  [
+    (* To test this function: 1. Create a portfolio of stocks. 2. Get the
+       initial buy date of one of the stocks to be tested (need a function for
+       this). 3. Split the present time and initial buy time into 10 intervals
+       (or whatever the number of intervals is) to get 10 times. 4. Ping API to
+       get prices at those 10 times, build a list of those prices. 5. Compare
+       function's output with 4.*)
+    ( " Stock not in empty portfolio" >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.stock_price_over_time
+           stock_price_over_time_test_portfolio1 "FB") );
+    ( " Stock not in non-empty portfolio" >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.stock_price_over_time
+           stock_price_over_time_test_portfolio2 "AAPL") );
+    (* (" Stock in non-empty portfolio, long duration between present time and
+       initial buy date. 10 data points.") (" Stock in non-empty portfolio,
+       short duration between present time and initial buy date. 10 data
+       points.") *)
+  ]
+
 let suite =
   "test suite for Portfolio.ml"
   >::: List.flatten
