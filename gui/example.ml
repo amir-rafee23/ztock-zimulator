@@ -69,5 +69,4 @@ let area =
     discs;
   L.superpose ~w:width ~h:height ~background (L.resident sdlw :: discs)
 
-let board = Bogue.of_layout area
-let () = Bogue.run board
+(* let board = Bogue.of_layout area let () = Bogue.run board *)

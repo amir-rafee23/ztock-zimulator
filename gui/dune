@@ -1,3 +1,4 @@
-(library
+(executable
  (name gui)
+ (public_name gui)
  (libraries bogue))
