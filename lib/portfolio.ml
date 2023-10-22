@@ -1,4 +1,5 @@
 open Unix
+open Api
 
 (** The signature of a user's portfolio. *)
 module type PortfolioType = sig
@@ -36,7 +37,7 @@ module UserPortfolio : PortfolioType = struct
       Note that all dates/times used are in epoch time. *)
 
   type batches_element_data = {
-    price : int;
+    price : float;
     quantity : int;
     (* Epoch time.*)
     date : float;
@@ -83,10 +84,8 @@ module UserPortfolio : PortfolioType = struct
       (* Set [initial_buy_date]. *)
       let i = Unix.time () in
 
-      (* TODO: Add real-time price. *)
-
       (* Initialize [buy_batches]. *)
-      let b = [ { price = 0; quantity = q; date = i } ] in
+      let b = [ { price = Api.get_price stock (); quantity = q; date = i } ] in
 
       (* Initialize [sell_batches]. *)
       let s = [] in
@@ -113,7 +112,16 @@ module UserPortfolio : PortfolioType = struct
       (* New [buy_batches]. *)
       let old_b = (String_map.find stock portfolio).buy_batches in
       (* TODO: Real-time price.*)
-      let b = old_b @ [ { price = 0; quantity = q; date = Unix.time () } ] in
+      let b =
+        old_b
+        @ [
+            {
+              price = Api.get_price stock ();
+              quantity = q;
+              date = Unix.time ();
+            };
+          ]
+      in
 
       (* New stock data. *)
       let old_data = String_map.find stock portfolio in
@@ -154,7 +162,13 @@ module UserPortfolio : PortfolioType = struct
         (*TODO: price*)
         let s =
           (String_map.find stock portfolio).sell_batches
-          @ [ { price = 0; quantity = qty; date = Unix.time () } ]
+          @ [
+              {
+                price = Api.get_price stock ();
+                quantity = qty;
+                date = Unix.time ();
+              };
+            ]
         in
 
         (* New stock data. *)
@@ -174,9 +188,11 @@ module UserPortfolio : PortfolioType = struct
         (* Data on [stock]. *)
 
         (* Determine the string representation of the epoch initial buy date.
-           Month/Day/Year is the output format. *)
+           month/day/year hour:min:sec is the output format. *)
         let local_time = Unix.localtime data.initial_buy_date in
-        let str_time =
+        let str_date_time =
+          (* TODO: Factor out common code (maybe use map). *)
+
           (* tm_mon gives the month - 1*)
           (local_time.tm_mon + 1 |> string_of_int)
           ^ "/"
@@ -184,15 +200,25 @@ module UserPortfolio : PortfolioType = struct
           ^ "/"
           (*tm_year gives the year - 1900*)
           ^ (local_time.tm_year + 1900 |> string_of_int)
+          ^ " "
+          ^ (local_time.tm_hour |> string_of_int)
+          ^ ":"
+          ^ (local_time.tm_min |> string_of_int)
+          ^ ":"
+          ^ (local_time.tm_sec |> string_of_int)
         in
+
+        let current_price = Api.get_price stock () in
 
         let str =
           Printf.sprintf
             "STOCK: %s\n\
              Quantity: %i\n\
-             Current price: TODO (float)\n\
+             Current price: $%F\n\
              Initial buy date: %s\n\
-             Current total holding value: TODO%!" stock data.quantity str_time
+             Current total holding value: $%F%!" stock data.quantity
+            current_price str_date_time
+            (current_price *. float_of_int data.quantity)
         in
         (* Handle possibly printing more stocks. *)
         if t = [] then str

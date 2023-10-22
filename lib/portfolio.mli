@@ -53,7 +53,8 @@ module type PortfolioType = sig
   val display_portfolio : 'a t -> string
   (** Returns a "pretty-printer" string to display the portfolio. For each stock
       in the portfolio, displays: stock name, quantity, current price, current
-      total holding value, initial buy date (m/d/y format).*)
+      total holding value, initial buy date and time (month/day/year
+      hour:min:sec format).*)
 
   val cost_basis : 'a t -> string -> int option
   (** The cost-basis of a certain stock held in a portfolio. Returns [None] if

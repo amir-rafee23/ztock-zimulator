@@ -7,18 +7,18 @@ let contains_stock_tests =
   [
     ( "Empty portfolio" >:: fun _ ->
       assert_equal false
-        (Test_Portfolio.contains_stock Test_Portfolio.empty_portfolio "FB") );
+        (Test_Portfolio.contains_stock Test_Portfolio.empty_portfolio "MSFT") );
   ]
 
 (* Portfolios used to test [add_stock]. *)
 let add_stock_test_portfolio_1 =
-  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "FB" 10
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 10
 
 let add_stock_test_portfolio_2 =
   Test_Portfolio.add_stock add_stock_test_portfolio_1 "AAPL" 5
 
 let add_stock_test_portfolio_3 =
-  Test_Portfolio.add_stock add_stock_test_portfolio_2 "FB" 6
+  Test_Portfolio.add_stock add_stock_test_portfolio_2 "MSFT" 6
 
 (* TODO: More comprehensive tests. *)
 (* Also tests [quantity_stock] and [contains_stock]. *)
@@ -26,10 +26,10 @@ let add_stock_tests =
   [
     ( " Adding stock s to empty portfolio - presence of s. " >:: fun _ ->
       assert_equal true
-        (Test_Portfolio.contains_stock add_stock_test_portfolio_1 "FB") );
+        (Test_Portfolio.contains_stock add_stock_test_portfolio_1 "MSFT") );
     ( " Adding stock s to empty portfolio - quantity of s. " >:: fun _ ->
       assert_equal 10
-        (Test_Portfolio.quantity_stock add_stock_test_portfolio_1 "FB") );
+        (Test_Portfolio.quantity_stock add_stock_test_portfolio_1 "MSFT") );
     ( " Adding stock to empty portfolio - presence of absent stock. "
     >:: fun _ ->
       assert_equal false
@@ -47,7 +47,7 @@ let add_stock_tests =
     ( " Adding existing stock s to non-empty portfolio - quantity of s. "
     >:: fun _ ->
       assert_equal 16
-        (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "FB") );
+        (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "MSFT") );
     ( " Adding existing stock to non-empty portfolio - quantity of unadded \
        stock unchanged. "
     >:: fun _ ->
@@ -60,12 +60,12 @@ let remove_stock_test_portfolio1 =
   Test_Portfolio.remove_stock Test_Portfolio.empty_portfolio "AAPL" 10
 
 let remove_stock_test_portfolio2 =
-  let p1 = Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "FB" 5 in
-  let p2 = Test_Portfolio.remove_stock p1 "FB" 2 in
+  let p1 = Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 5 in
+  let p2 = Test_Portfolio.remove_stock p1 "MSFT" 2 in
   p2
 
 let remove_stock_test_portfolio3 =
-  Test_Portfolio.remove_stock remove_stock_test_portfolio2 "FB" 3
+  Test_Portfolio.remove_stock remove_stock_test_portfolio2 "MSFT" 3
 
 let remove_stock_test_portfolio4 =
   Test_Portfolio.remove_stock remove_stock_test_portfolio2 "AAPL" 10
@@ -84,22 +84,22 @@ let remove_stock_tests =
        presence of s"
     >:: fun _ ->
       assert_equal true
-        (Test_Portfolio.contains_stock remove_stock_test_portfolio2 "FB") );
+        (Test_Portfolio.contains_stock remove_stock_test_portfolio2 "MSFT") );
     ( " Removing a stock s not completely from a non-empty portfolio - \
        quantity of s. "
     >:: fun _ ->
       assert_equal 3
-        (Test_Portfolio.quantity_stock remove_stock_test_portfolio2 "FB") );
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio2 "MSFT") );
     ( " Removing a stock s completely from a non-empty portfolio - quantity of \
        s."
     >:: fun _ ->
       assert_equal 0
-        (Test_Portfolio.quantity_stock remove_stock_test_portfolio3 "FB") );
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio3 "MSFT") );
     ( " Removing a stock s completely from a non-empty portfolio - presence of \
        s. "
     >:: fun _ ->
       assert_equal false
-        (Test_Portfolio.contains_stock remove_stock_test_portfolio3 "FB") );
+        (Test_Portfolio.contains_stock remove_stock_test_portfolio3 "MSFT") );
     ( "Removing a stock s that is absent from a non-empty portfolio - presence \
        of s. "
     >:: fun _ ->
@@ -111,7 +111,7 @@ let remove_stock_tests =
 let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
 
 let stock_price_over_time_test_portfolio2 =
-  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "FB" 10
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 10
 
 let stock_price_over_time_tests =
   [
@@ -124,7 +124,7 @@ let stock_price_over_time_tests =
     ( " Stock not in empty portfolio" >:: fun _ ->
       assert_equal []
         (Test_Portfolio.stock_price_over_time
-           stock_price_over_time_test_portfolio1 "FB") );
+           stock_price_over_time_test_portfolio1 "MSFT") );
     ( " Stock not in non-empty portfolio" >:: fun _ ->
       assert_equal []
         (Test_Portfolio.stock_price_over_time
