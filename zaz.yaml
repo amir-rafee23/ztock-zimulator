@@ -1,0 +1,35 @@
+---
+# Members of the group.
+group:
+  - name: Amir bin Rafeeuddeen
+    netid: mb2563
+  - name: Zachary Roitman
+    netid: zar7
+  - name: Zachary Jessup
+    netid: zsj5
+# Your PM.
+pm:
+  name: JiaYing Li
+  netid: jl2725
+# Set to false if you don't want your gallery entry to be public.
+publish: true
+# Pithy title
+title: "The Zazzy Ztock Zimulator"
+# OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
+git-repo: "https://github.coecis.cornell.edu/zsj5/CS-3110-Final-Project---zaz"
+# If you have no demo screencast, replace the url string with an empty string ""
+demo-video-url: ""
+# Write a short, attention-grabbing description of your project.
+desc: >
+  Stock trading without the risk, but (maybe) all the reward! For the Zimulator 
+  makes it possible to see just how well your trading strategies perform before 
+  you actually deploy your capital and wreak havoc on markets!
+
+  Specifically, users will be able to buy and add stocks to their portfolio, track  
+  its value over time, and visualize their portfolio graphically, such as contrasting
+  performance with benchmark indices. All these features are deployed through 
+  a GUI, and do not involve real capital, 
+
+  And so, keep your bank account safe and healthy, with Zazzy, the Ztock Zimulator!
+
+  
