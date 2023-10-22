@@ -107,12 +107,72 @@ let remove_stock_tests =
         (Test_Portfolio.contains_stock remove_stock_test_portfolio4 "AAPL") );
   ]
 
+(* Portfolios used to test [batches_data].*)
+let batches_data_test_portfolio1 = Test_Portfolio.empty_portfolio
+
+let batches_data_test_portfolio2 =
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "AAPL" 10
+
+let batches_data_test_portfolio3 =
+  Test_Portfolio.remove_stock batches_data_test_portfolio2 "AAPL" 5
+
+let batches_data_tests =
+  [
+    ( "Buy batch for empty portfolio." >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.batches_data batches_data_test_portfolio1 "buy" "MSFT")
+    );
+    ( "Sell batch for empty portfolio." >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.batches_data batches_data_test_portfolio1 "sell" "MSFT")
+    );
+    (* Only test the quantity because the price depends on the time the buy
+       order was executed, which we don't have access to.*)
+
+    (* TODO: Factor out code into a single helper.*)
+    ( "Single-element buy batch for present stock in single-stock portfolio."
+    >:: fun _ ->
+      let batches =
+        Test_Portfolio.batches_data batches_data_test_portfolio2 "buy" "AAPL"
+      in
+      (* Get the lone buy order's data.*)
+      let data = List.nth batches 0 in
+      (* Get the quantity of stock in that buy order.*)
+      let qty =
+        match data with
+        | _, q, _ -> q
+      in
+
+      assert_equal 10 qty );
+    ( "Single-element sell batch for present stock in single-stock portfolio."
+    >:: fun _ ->
+      let batches =
+        Test_Portfolio.batches_data batches_data_test_portfolio3 "sell" "AAPL"
+      in
+      let data = List.nth batches 0 in
+      let qty =
+        match data with
+        | _, q, _ -> q
+      in
+
+      assert_equal 5 qty );
+    ( "Buy batch for absent stock in single-stock portfolio." >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.batches_data batches_data_test_portfolio2 "buy" "MSFT")
+    );
+    ( " Sell batch for absent stock in single-stock portfolio." >:: fun _ ->
+      assert_equal []
+        (Test_Portfolio.batches_data batches_data_test_portfolio3 "sell" "META")
+    );
+  ]
+
 (* Portfolios used to test [stock_price_over_time]. *)
 let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
 
 let stock_price_over_time_test_portfolio2 =
   Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 10
 
+(* TODO: Run these tests in the suite.*)
 let stock_price_over_time_tests =
   [
     (* To test this function: 1. Create a portfolio of stocks. 2. Get the
@@ -138,6 +198,11 @@ let stock_price_over_time_tests =
 let suite =
   "test suite for Portfolio.ml"
   >::: List.flatten
-         [ contains_stock_tests; add_stock_tests; remove_stock_tests ]
+         [
+           contains_stock_tests;
+           add_stock_tests;
+           remove_stock_tests;
+           batches_data_tests;
+         ]
 
 let _ = run_test_tt_main suite

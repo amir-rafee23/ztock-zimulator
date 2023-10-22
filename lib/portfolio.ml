@@ -11,6 +11,7 @@ module type PortfolioType = sig
   val stock_price_over_time : 'a t -> string -> int list
   val add_stock : 'a t -> string -> int -> 'a t
   val remove_stock : 'a t -> string -> int -> 'a t
+  val batches_data : 'a t -> string -> string -> (float * int * float) list
   val display_portfolio : 'a t -> string
   val cost_basis : 'a t -> string -> int option
 end
@@ -117,7 +118,9 @@ module UserPortfolio : PortfolioType = struct
         @ [
             {
               price = Api.get_price stock ();
-              quantity = q;
+              (* Amount of [stock] added in just this buy order, NOT the total
+                 quantity of [stock] currently held.*)
+              quantity = qty;
               date = Unix.time ();
             };
           ]
@@ -165,6 +168,8 @@ module UserPortfolio : PortfolioType = struct
           @ [
               {
                 price = Api.get_price stock ();
+                (* Amount of [stock] removed in just this sell order, NOT the
+                   total quantity of [stock] currently held.*)
                 quantity = qty;
                 date = Unix.time ();
               };
@@ -177,6 +182,23 @@ module UserPortfolio : PortfolioType = struct
 
         (* Update binding. *)
         String_map.add stock data portfolio
+
+  (** Helper to [batches_data]. Processes [batches] to return a list of tuples,
+      each of the form (price, quantity, epoch time) for each order in
+      [batches]. *)
+  let rec get_batches_data (batches : batches_element_data list) :
+      (float * int * float) list =
+    match batches with
+    | [] -> []
+    | data :: t ->
+        [ (data.price, data.quantity, data.date) ] @ get_batches_data t
+
+  let batches_data (portfolio : 'a t) (batches_type : string) (stock : string) :
+      (float * int * float) list =
+    if contains_stock portfolio stock = false then []
+    else if batches_type = "buy" then
+      get_batches_data (String_map.find stock portfolio).buy_batches
+    else get_batches_data (String_map.find stock portfolio).sell_batches
 
   let rec display_portfolio (portfolio : 'a t) : string =
     (* Stocks held in [portfolio]. *)

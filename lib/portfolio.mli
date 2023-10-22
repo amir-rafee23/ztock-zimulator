@@ -49,6 +49,20 @@ module type PortfolioType = sig
 
       Requires: quantity of stock to be removed >= 0.*)
 
+  val batches_data : 'a t -> string -> string -> (float * int * float) list
+  (** Returns information regarding the individual orders in a buy/sell batch
+      for a certain stock.
+
+      Specifically, returns a list of tuples, each of the form (price, quantity,
+      epoch time) for each order in a buy/sell batch.
+
+      Tuples should be ordered from the first buy/sell order to the most recent
+      buy/sell order.
+
+      Returns the empty list if the stock is not in the portoflio.
+
+      Requires: first argument is either "buy"/"sell". *)
+
   (* TODO: Also display current portfolio's value. Need a function for that.*)
   val display_portfolio : 'a t -> string
   (** Returns a "pretty-printer" string to display the portfolio. For each stock
