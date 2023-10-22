@@ -36,10 +36,3 @@ let get_price ticker () =
   let json = ping ticker () in
   let symbol = find_field json "regularMarketPrice" in
   symbol
-
-let test () =
-  let value = get_price "MSFT" () in
-  Printf.printf "The current
-\n\n\n\n\n   \n market price is: %f\n" value
-
-let x = test ()
