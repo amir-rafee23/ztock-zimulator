@@ -149,7 +149,8 @@ module UserPortfolio : PortfolioType = struct
       qty > (String_map.find stock portfolio).quantity
     then
       failwith
-        ("Quantity of " ^ stock ^ "to be removed exceeds initial quantity held!")
+        ("Quantity of " ^ stock
+       ^ " to be removed exceeds initial quantity held!")
     else
       (* Need to update the stock data. Only quantity, sell_batches are
          changed. *)
