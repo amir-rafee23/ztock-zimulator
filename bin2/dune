@@ -1,0 +1,4 @@
+(executable
+ (name tui)
+ (public_name tui)
+ (libraries stocks))
