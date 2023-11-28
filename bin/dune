@@ -1,4 +1,4 @@
 (executable
- (name gui)
- (public_name gui)
- (libraries bogue stocks))
+ (name tui)
+ (public_name tui)
+ (libraries stocks))
