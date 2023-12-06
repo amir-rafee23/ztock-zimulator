@@ -3,17 +3,17 @@ open Api
 
 (** The signature of a user's portfolio. *)
 module type PortfolioType = sig
-  type 'a t
+  type t
 
-  val empty_portfolio : 'a t
-  val contains_stock : 'a t -> string -> bool
-  val quantity_stock : 'a t -> string -> int
-  val stock_price_over_time : 'a t -> string -> int list
-  val add_stock : 'a t -> string -> int -> 'a t
-  val remove_stock : 'a t -> string -> int -> 'a t
-  val batches_data : 'a t -> string -> string -> (float * int * float) list
-  val display_portfolio : 'a t -> string
-  val cost_basis : 'a t -> string -> int option
+  val empty_portfolio : t
+  val contains_stock : t -> string -> bool
+  val quantity_stock : t -> string -> int
+  val stock_price_over_time : t -> string -> int list
+  val add_stock : t -> string -> int -> t
+  val remove_stock : t -> string -> int -> t
+  val batches_data : t -> string -> string -> (float * int * float) list
+  val display_portfolio : t -> string
+  val cost_basis : t -> string -> int option
 end
 
 (** A Map whose keys are strings. *)
@@ -52,14 +52,14 @@ module UserPortfolio : PortfolioType = struct
     sell_batches : batches_element_data list;
   }
 
-  type 'a t = stock_data String_map.t
+  type t = stock_data String_map.t
 
   let empty_portfolio = String_map.empty
 
-  let contains_stock (portfolio : 'a t) (stock : string) =
+  let contains_stock (portfolio : t) (stock : string) =
     String_map.mem stock portfolio
 
-  let quantity_stock (portfolio : 'a t) (stock : string) : int =
+  let quantity_stock (portfolio : t) (stock : string) : int =
     let data = String_map.find_opt stock portfolio in
     match data with
     (* [stock] not in portfolio. *)
@@ -67,10 +67,10 @@ module UserPortfolio : PortfolioType = struct
     (* [stock] in portfolio. *)
     | Some x -> x.quantity
 
-  let stock_price_over_time (portfolio : 'a t) (stock : string) : int list =
+  let stock_price_over_time (portfolio : t) (stock : string) : int list =
     failwith "unimplemented"
 
-  let add_stock (portfolio : 'a t) (stock : string) (qty : int) : 'a t =
+  let add_stock (portfolio : t) (stock : string) (qty : int) : t =
     (* Precondition. *)
     (* TODO: Add descriptive error message. *)
     assert (qty >= 0);
@@ -134,7 +134,7 @@ module UserPortfolio : PortfolioType = struct
       (* Update the binding. *)
       String_map.add stock new_data portfolio
 
-  let remove_stock (portfolio : 'a t) (stock : string) (qty : int) : 'a t =
+  let remove_stock (portfolio : t) (stock : string) (qty : int) : t =
     (* Precondition. *)
     assert (qty >= 0);
 
@@ -194,14 +194,14 @@ module UserPortfolio : PortfolioType = struct
     | data :: t ->
         [ (data.price, data.quantity, data.date) ] @ get_batches_data t
 
-  let batches_data (portfolio : 'a t) (batches_type : string) (stock : string) :
+  let batches_data (portfolio : t) (batches_type : string) (stock : string) :
       (float * int * float) list =
     if contains_stock portfolio stock = false then []
     else if batches_type = "buy" then
       get_batches_data (String_map.find stock portfolio).buy_batches
     else get_batches_data (String_map.find stock portfolio).sell_batches
 
-  let rec display_portfolio (portfolio : 'a t) : string =
+  let rec display_portfolio (portfolio : t) : string =
     (* Stocks held in [portfolio]. *)
     let stocks = String_map.bindings portfolio in
 
@@ -250,7 +250,7 @@ module UserPortfolio : PortfolioType = struct
           let remaining_portfolio = String_map.remove stock portfolio in
           str ^ "\n\n" ^ display_portfolio remaining_portfolio
 
-  let cost_basis (portfolio : 'a t) (stock : string) : int option =
+  let cost_basis (portfolio : t) (stock : string) : int option =
     failwith "unimplemented"
 end
 
