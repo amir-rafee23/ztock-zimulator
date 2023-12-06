@@ -15,7 +15,7 @@ test:
 	OCAMLRUNPARAM=b dune exec test/main.exe
 
 run:
-	OCAMLRUNPARAM=b dune exec bin2/tui.exe
+	OCAMLRUNPARAM=b dune exec bin/tui.exe
 
 zip:
 	rm -f ms2_code.zip
