@@ -29,8 +29,7 @@ let ping_id (ticker : string) () =
 
 let print_json ticker () =
   let json_result = (ping_id ticker ()) in
-  let json_string = Yojson.Basic.pretty_to_string json_result in
-  print_endline json_string
+  Yojson.Basic.pretty_to_string json_result
 
 let print_json_results ticker () =
   let json_result = (ping_id ticker ()) in
@@ -41,9 +40,8 @@ let print_json_results ticker () =
         | `List results -> results
         | _ -> []
       in
-      let results_string = Yojson.Basic.pretty_to_string (`List results) in
-      print_endline results_string
-  | _ -> print_endline "Invalid JSON format"
+      Yojson.Basic.pretty_to_string (`List results)
+  | _ -> invalid_arg "Invalid JSON format"
 
 let print_last_results ticker () =
   let json_data = ping_id ticker () in
@@ -56,7 +54,7 @@ let print_last_results ticker () =
       in
       (match List.rev results with
       | (`Assoc result_fields)::_ ->
-          print_endline (Yojson.Basic.to_string (`Assoc result_fields))
+          (Yojson.Basic.to_string (`Assoc result_fields))
       | _ -> invalid_arg "No results found")
   | _ -> invalid_arg "Invalid JSON format"
 
