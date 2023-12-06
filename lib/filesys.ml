@@ -5,8 +5,8 @@ module TestPortfolio = Portfolio.UserPortfolio
 module type FileSysType = sig
   val create_file : string
   val update_file : string -> string
-  val to_user_portfolio : string -> 'a Portfolio.UserPortfolio.t
-  val to_file : 'a Portfolio.UserPortfolio.t -> string
+  val to_user_portfolio : string -> Portfolio.UserPortfolio.t
+  val to_file : Portfolio.UserPortfolio.t -> string
 end
 
 module FileSys : FileSysType = struct
@@ -16,7 +16,7 @@ module FileSys : FileSysType = struct
 
   let update_file (file : string) : string = failwith "unimplemented"
 
-  let to_user_portfolio (file : string) : 'a Portfolio.UserPortfolio.t =
+  let to_user_portfolio (file : string) : Portfolio.UserPortfolio.t =
     (* Referring to: https://ocaml.org/docs/file-manipulation*)
 
     (* Currently trying to just read from a [.txt] file that contains a single
@@ -36,6 +36,6 @@ module FileSys : FileSysType = struct
       (* emergency closing *)
       raise e
 
-  let to_file (portfolio : 'a Portfolio.UserPortfolio.t) : string =
+  let to_file (portfolio : Portfolio.UserPortfolio.t) : string =
     failwith "unimplemented"
 end

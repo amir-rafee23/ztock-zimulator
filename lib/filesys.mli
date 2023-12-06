@@ -10,11 +10,11 @@ module type FileSysType = sig
   (** [update_file file] updates [file] to contain most recent data on the
       user's portfolio. The file name is returned.*)
 
-  val to_user_portfolio : string -> 'a Portfolio.UserPortfolio.t
+  val to_user_portfolio : string -> Portfolio.UserPortfolio.t
   (** [to_user_portfolio file] uses exactly all the data in [file] to create a
       [UserPortfolio]. *)
 
-  val to_file : 'a Portfolio.UserPortfolio.t -> string
+  val to_file : Portfolio.UserPortfolio.t -> string
   (** [to_file portfolio] creates a data file named [data.txt] that stores
       exactly all the information in [portfolio]. The file name is returned. *)
 end
