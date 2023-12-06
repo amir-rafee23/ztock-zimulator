@@ -2,6 +2,8 @@ open OUnit2
 open Stocks
 open Portfolio
 module Test_Portfolio = Portfolio.UserPortfolio
+open Filesys
+module Test_Filesys = FileSys
 
 let contains_stock_tests =
   [
@@ -193,6 +195,20 @@ let stock_price_over_time_tests =
        initial buy date. 10 data points.") (" Stock in non-empty portfolio,
        short duration between present time and initial buy date. 10 data
        points.") *)
+  ]
+
+let filesys_tests =
+  [
+    (* ( " Create a new data file, check its existence. " >:: fun _ ->
+       assert_equal true (let file = Test_Filesys.create_file in Sys.file_exists
+       file) ); *)
+    ( " Convert an empty data file to a portfolio. " >:: fun _ ->
+      assert_equal Test_Portfolio.empty_portfolio
+        (Test_Filesys.to_user_portfolio "data.txt") );
+    ( " Convert an empty portfolio to a data file. " >:: fun _ ->
+      assert_equal Test_Portfolio.empty_portfolio
+        (Test_Portfolio.empty_portfolio |> Test_Filesys.to_file
+       |> Test_Filesys.to_user_portfolio) );
   ]
 
 let suite =
