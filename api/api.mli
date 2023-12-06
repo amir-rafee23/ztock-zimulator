@@ -2,11 +2,11 @@
     scraping, for intraday trading*)
 val ping_id : string -> unit -> Yojson.Basic.t
 (** Prints the full json returned by ping for a given ticker *)
-val print_json : string -> unit -> unit
+val print_json : string -> unit -> string
 (** Prints only the Results portion of the json for a given ticker*)
-val print_json_results : string -> unit -> unit
+val print_json_results : string -> unit -> string
 (** return the last results, date, price, etc.*)
-val print_last_results : string -> unit -> unit
+val print_last_results : string -> unit -> string
 (** returns last close price *)
 val get_price_current : string -> Yojson.Basic.t -> float
 (** returns the date of the last recorded price*)
