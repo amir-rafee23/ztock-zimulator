@@ -12,7 +12,7 @@ module type PortfolioType = sig
   val add_stock : t -> string -> int -> t
   val remove_stock : t -> string -> int -> t
   val batches_data : t -> string -> string -> (float * int * float) list
-  val display_portfolio : t -> string
+  val display_portfolio : t -> string list
   val cost_basis : t -> string -> int option
 end
 
@@ -201,12 +201,12 @@ module UserPortfolio : PortfolioType = struct
       get_batches_data (String_map.find stock portfolio).buy_batches
     else get_batches_data (String_map.find stock portfolio).sell_batches
 
-  let rec display_portfolio (portfolio : t) : string =
+  let rec display_portfolio (portfolio : t) : string list =
     (* Stocks held in [portfolio]. *)
     let stocks = String_map.bindings portfolio in
 
     match stocks with
-    | [] -> "Portfolio is empty."
+    | [] -> [ "Portfolio is empty." ]
     | (stock, data) :: t ->
         (* Data on [stock]. *)
 
@@ -234,21 +234,22 @@ module UserPortfolio : PortfolioType = struct
         let current_price = Api.get_price stock in
 
         let str =
-          Printf.sprintf
-            "STOCK: %s\n\
-             Quantity: %i\n\
-             Current price: $%F\n\
-             Initial buy date: %s\n\
-             Current total holding value: $%F%!" stock data.quantity
-            current_price str_date_time
-            (current_price *. float_of_int data.quantity)
+          Printf.
+            [
+              sprintf "STOCK: %s" stock;
+              sprintf "Quantity: %i" data.quantity;
+              sprintf "Current price: $%F" current_price;
+              sprintf "Initial buy date: %s" str_date_time;
+              sprintf "Current total holding value: $%F%!"
+                (current_price *. float_of_int data.quantity);
+            ]
         in
         (* Handle possibly printing more stocks. *)
         if t = [] then str
         else
           (* More stocks to be printed. *)
           let remaining_portfolio = String_map.remove stock portfolio in
-          str ^ "\n\n" ^ display_portfolio remaining_portfolio
+          str @ [ ""; "" ] @ display_portfolio remaining_portfolio
 
   let cost_basis (portfolio : t) (stock : string) : int option =
     failwith "unimplemented"

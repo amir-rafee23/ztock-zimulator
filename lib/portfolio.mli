@@ -64,7 +64,7 @@ module type PortfolioType = sig
       Requires: first argument is either "buy"/"sell". *)
 
   (* TODO: Also display current portfolio's value. Need a function for that.*)
-  val display_portfolio : t -> string
+  val display_portfolio : t -> string list
   (** Returns a "pretty-printer" string to display the portfolio. For each stock
       in the portfolio, displays: stock name, quantity, current price, current
       total holding value, initial buy date and time (month/day/year
