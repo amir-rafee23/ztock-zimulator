@@ -5,6 +5,7 @@ open Notty
 open Notty_unix
 open Stocks
 open Uchar
+open Api
 module P = Portfolio.UserPortfolio
 
 type step =
@@ -16,6 +17,7 @@ type screen =
   | Main
   | Display
   | Buy of step
+  | Sell of step
   | Quit
 
 type dir =
@@ -39,26 +41,25 @@ let inital_state : state =
     quantity = "";
   }
 
-let get_max_options scr =
-  match scr with
-  | Main -> 2
-  | Display -> 0
-  | Buy Ticker -> 1
-  | Buy Quantity -> 1
-  | Buy Success -> 0
-  | Quit -> -1
-
+(* [get_option_bindings scr] is the list of navigation menus at the top of the
+   terminal given the current screen [scr]*)
 let get_option_bindings scr =
   match scr with
-  | Main -> [ Display; Buy Ticker; Quit ]
+  | Main -> [ Display; Buy Ticker; Sell Ticker; Quit ]
   | Display -> [ Main ]
   | Buy s -> (
       match s with
       | Ticker -> [ Buy Quantity; Main ]
       | Quantity -> [ Buy Success; Main ]
       | Success -> [ Main ])
+  | Sell s -> (
+      match s with
+      | Ticker -> [ Sell Quantity; Main ]
+      | Quantity -> [ Sell Success; Main ]
+      | Success -> [ Main ])
   | Quit -> []
 
+(* [render_screen st] is a Notty image to display constructed from state [st]*)
 let render_screen st =
   let create_option s u =
     I.(
@@ -74,15 +75,16 @@ let render_screen st =
       I.(
         create_option "Display portfolio" (st.selected = 0)
         <|> void 2 0
-        <|> create_option "Add stock" (st.selected = 1)
+        <|> create_option "Buy stock" (st.selected = 1)
         <|> void 2 0
-        <|> create_option "Quit" (st.selected = 2))
+        <|> create_option "Sell stock" (st.selected = 2)
+        <|> void 2 0
+        <|> create_option "Quit" (st.selected = 3))
   | Display ->
       I.(
-        create_option "Main menu" (st.selected = 0)
-        <-> void 0 1
-        <-> (st.portfolio |> P.display_portfolio |> display_list))
-  | Buy Ticker ->
+        create_option "Main menu" (st.selected = 0) <-> void 0 1
+        (* <-> (st.portfolio |> P.display_portfolio |> display_list)) *))
+  | Buy Ticker | Sell Ticker ->
       I.(
         create_option "Select ticker" (st.selected = 0)
         <|> void 2 0
@@ -90,7 +92,7 @@ let render_screen st =
         <-> void 0 1
         <-> string A.(fg white) "Enter the ticker:"
         <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
-  | Buy Quantity ->
+  | Buy Quantity | Sell Quantity ->
       I.(
         create_option "Select quantity" (st.selected = 0)
         <|> void 2 0
@@ -105,10 +107,18 @@ let render_screen st =
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been bought."
         <-> (st.portfolio |> P.display_portfolio |> display_list))
+  | Sell Success ->
+      I.(
+        create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg white) "Congratulations, stock has been sold."
+        <-> (st.portfolio |> P.display_portfolio |> display_list))
   | Quit -> I.empty
 
+(* [arrow_clicked st dir] is the updated state with a new selected menu option
+   given direction [dir]*)
 let arrow_clicked st dir =
-  let max = get_max_options st.screen in
+  let max = (st.screen |> get_option_bindings |> List.length) - 1 in
   let sel =
     match dir with
     | Left -> if st.selected = 0 then 0 else st.selected - 1
@@ -116,6 +126,7 @@ let arrow_clicked st dir =
   in
   { st with selected = sel }
 
+(* [enter_clicked st] is the updated state after enter button is clicked*)
 let enter_clicked st =
   match List.nth (get_option_bindings st.screen) st.selected with
   | Buy Success ->
@@ -129,18 +140,32 @@ let enter_clicked st =
         ticker = "";
         quantity = "";
       }
+  | Sell Success ->
+      let updated_portfolio =
+        P.remove_stock st.portfolio st.ticker (int_of_string st.quantity)
+      in
+      {
+        screen = Sell Success;
+        selected = 0;
+        portfolio = updated_portfolio;
+        ticker = "";
+        quantity = "";
+      }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
+(* [character_clicked st c] is the updated state after character [c] is
+   clicked *)
 let character_clicked st c =
   match st with
-  | { screen = Buy Ticker; ticker } ->
+  | { screen = Buy Ticker; ticker } | { screen = Sell Ticker; ticker } ->
       {
         st with
         ticker =
           (if c = "back" then String.sub ticker 0 (String.length ticker - 1)
            else ticker ^ c);
       }
-  | { screen = Buy Quantity; quantity } ->
+  | { screen = Buy Quantity; quantity } | { screen = Sell Quantity; quantity }
+    ->
       {
         st with
         quantity =
@@ -149,6 +174,9 @@ let character_clicked st c =
       }
   | _ -> st
 
+(* [main_loop t st] is the main loop of the application. Given the terminal IO
+   abstraction [t] and initial state [st], waits for and then processes an
+   interactive event *)
 let rec main_loop (t : Term.t) (st : state) =
   Term.image t (render_screen st);
   match Term.event t with
@@ -169,3 +197,5 @@ let () =
   let t = Term.create () in
   main_loop t inital_state;
   Term.release t
+
+(* let () = Api.print_json_results "MSFT" () *)
