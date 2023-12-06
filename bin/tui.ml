@@ -43,6 +43,17 @@ let initial_state : state =
     quantity = "";
   }
 
+let title =
+  I.(
+    void 0 3
+    <-> (void 5 0 <|> string A.(fg blue) "ZAZ STOCK SIMULATOR")
+    </> (string A.(fg black ++ bg blue) "|----------------------------|"
+        <-> (char A.(fg black ++ bg blue) '|' 1 5
+            <|> void 28 0
+            <|> char A.(fg black ++ bg blue) '|' 1 5)
+        <-> string A.(fg black ++ bg blue) "|----------------------------|")
+    <-> void 0 1)
+
 (* [get_option_bindings scr] is the list of navigation menus at the top of the
    terminal given the current screen [scr]*)
 let get_option_bindings scr =
@@ -73,57 +84,53 @@ let render_image st =
     | [] -> I.empty
     | h :: t -> I.(string A.(fg white) h <-> display_list t)
   in
-  match st.screen with
-  | Main ->
-      I.(
+  I.(
+    title
+    <->
+    match st.screen with
+    | Main ->
         create_option "Display portfolio" (st.selected = 0)
         <|> void 2 0
         <|> create_option "Buy stock" (st.selected = 1)
         <|> void 2 0
         <|> create_option "Sell stock" (st.selected = 2)
         <|> void 2 0
-        <|> create_option "Quit" (st.selected = 3))
-  | Display ->
-      I.(
+        <|> create_option "Quit" (st.selected = 3)
+    | Display ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
-        <-> (st.portfolio |> P.display_portfolio |> display_list))
-  | Buy Ticker | Sell Ticker ->
-      I.(
+        <-> (st.portfolio |> P.display_portfolio |> display_list)
+    | Buy Ticker | Sell Ticker ->
         create_option "Select ticker" (st.selected = 0)
         <|> void 2 0
         <|> create_option "Main menu" (st.selected = 1)
         <-> void 0 1
         <-> string A.(fg white) "Enter the ticker:"
-        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
-  | Buy Quantity | Sell Quantity ->
-      I.(
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
+    | Buy Quantity | Sell Quantity ->
         create_option "Select quantity" (st.selected = 0)
         <|> void 2 0
         <|> create_option "Main menu" (st.selected = 1)
         <-> void 0 1
         <-> string A.(fg green) st.ticker
         <-> string A.(fg white) "Enter the quantity:"
-        <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity))
-  | Buy Success ->
-      I.(
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity)
+    | Buy Success ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been bought."
-        <-> (st.portfolio |> P.display_portfolio |> display_list))
-  | Sell Success ->
-      I.(
+        <-> (st.portfolio |> P.display_portfolio |> display_list)
+    | Sell Success ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been sold."
-        <-> (st.portfolio |> P.display_portfolio |> display_list))
-  | Error e ->
-      I.(
+        <-> (st.portfolio |> P.display_portfolio |> display_list)
+    | Error e ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
         <-> string A.(fg red) "ERROR"
-        <-> string A.(fg white) e)
-  | Quit -> I.empty
+        <-> string A.(fg white) e
+    | Quit -> empty)
 
 (* [arrow_clicked st dir] is the updated state with a new selected menu option
    given direction [dir] *)
@@ -144,7 +151,7 @@ let enter_clicked st =
       let updated_portfolio =
         try P.add_stock st.portfolio st.ticker (int_of_string st.quantity) with
         | NoResultsFound ->
-            error := st.ticker ^ " was not found";
+            error := st.ticker ^ " was not found!";
             st.portfolio
         | InvalidJSONFormat ->
             error :=
@@ -169,8 +176,14 @@ let enter_clicked st =
         try
           P.remove_stock st.portfolio st.ticker (int_of_string st.quantity)
         with
+        | TickerNotHeld ->
+            error := st.ticker ^ " is not in your portfolio!";
+            st.portfolio
+        | ExceededQuantity ->
+            error := "You cannot sell more shares than you own!";
+            st.portfolio
         | NoResultsFound ->
-            error := st.ticker ^ " was not found";
+            error := st.ticker ^ " was not found!";
             st.portfolio
         | InvalidJSONFormat ->
             error :=

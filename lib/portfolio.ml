@@ -1,5 +1,6 @@
 open Unix
 open Api
+open Exceptions
 
 (** The signature of a user's portfolio. *)
 module type PortfolioType = sig
@@ -141,16 +142,13 @@ module UserPortfolio : PortfolioType = struct
     (* Check if [stock] is in [portfolio.] *)
     if
       String_map.mem stock portfolio = false
-      (* Not in portfolio. Return unchanged portfolio. *)
-    then portfolio
+      (* Not in portfolio. Raise exception *)
+    then raise TickerNotHeld
     else if
       (* In portfolio. Check if the quantity to be removed exceeds the initial
          quantity. *)
       qty > (String_map.find stock portfolio).quantity
-    then
-      failwith
-        ("Quantity of " ^ stock
-       ^ " to be removed exceeds initial quantity held!")
+    then raise ExceededQuantity
     else
       (* Need to update the stock data. Only quantity, sell_batches are
          changed. *)
