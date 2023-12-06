@@ -3,21 +3,29 @@ module TestPortfolio = Portfolio.UserPortfolio
 
 (** The signature of the user's portfolio data file management sytem. *)
 module type FileSysType = sig
-  val create_file : string
-  val update_file : string -> string
-  val to_user_portfolio : string -> 'a Portfolio.UserPortfolio.t
-  val to_file : 'a Portfolio.UserPortfolio.t -> string
+  val update_file : string -> Portfolio.UserPortfolio.t -> string
+  val to_user_portfolio : string -> Portfolio.UserPortfolio.t
 end
 
+(* Convert representation type to a string list list. *)
+
 module FileSys : FileSysType = struct
-  (** The data file created has name [data.txt], is stored in a new directory
-      [data_dir]. *)
-  let create_file = failwith "unimplemented"
+  let update_file (file : string) (portfolio : Portfolio.UserPortfolio.t) :
+      string =
+    (* Referring to: https://ocaml.org/docs/file-manipulation *)
 
-  let update_file (file : string) : string = failwith "unimplemented"
+    (* Get the output channel. *)
+    let oc = open_out file in
 
-  let to_user_portfolio (file : string) : 'a Portfolio.UserPortfolio.t =
-    (* Referring to: https://ocaml.org/docs/file-manipulation*)
+    (* Get the first key-value pair. *)
+    failwith "unimplemented"
+
+  (* Get the output channel. let oc = open_out file in (* Write something. *)
+     Printf.fprintf oc "hi!"; (* Close the output channel. *) close_out oc; (*
+     Return the file name. *) file *)
+
+  let to_user_portfolio (file : string) : Portfolio.UserPortfolio.t =
+    (* Referring to: https://ocaml.org/docs/file-manipulation *)
 
     (* Currently trying to just read from a [.txt] file that contains a single
        line, with the name of the stock ticker. *)
@@ -35,7 +43,4 @@ module FileSys : FileSysType = struct
       close_in_noerr ic;
       (* emergency closing *)
       raise e
-
-  let to_file (portfolio : 'a Portfolio.UserPortfolio.t) : string =
-    failwith "unimplemented"
 end
