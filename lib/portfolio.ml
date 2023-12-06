@@ -86,7 +86,7 @@ module UserPortfolio : PortfolioType = struct
       let i = Unix.time () in
 
       (* Initialize [buy_batches]. *)
-      let b = [ { price = Api.get_price stock (); quantity = q; date = i } ] in
+      let b = [ { price = Api.get_price stock; quantity = q; date = i } ] in
 
       (* Initialize [sell_batches]. *)
       let s = [] in
@@ -117,7 +117,7 @@ module UserPortfolio : PortfolioType = struct
         old_b
         @ [
             {
-              price = Api.get_price stock ();
+              price = Api.get_price stock;
               (* Amount of [stock] added in just this buy order, NOT the total
                  quantity of [stock] currently held.*)
               quantity = qty;
@@ -168,7 +168,7 @@ module UserPortfolio : PortfolioType = struct
           (String_map.find stock portfolio).sell_batches
           @ [
               {
-                price = Api.get_price stock ();
+                price = Api.get_price stock;
                 (* Amount of [stock] removed in just this sell order, NOT the
                    total quantity of [stock] currently held.*)
                 quantity = qty;
@@ -231,7 +231,7 @@ module UserPortfolio : PortfolioType = struct
           ^ (local_time.tm_sec |> string_of_int)
         in
 
-        let current_price = Api.get_price stock () in
+        let current_price = Api.get_price stock in
 
         let str =
           Printf.sprintf
