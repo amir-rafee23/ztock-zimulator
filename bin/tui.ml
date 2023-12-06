@@ -6,6 +6,7 @@ open Notty_unix
 open Stocks
 open Uchar
 open Api
+open Exceptions
 module P = Portfolio.UserPortfolio
 
 type step =
@@ -18,6 +19,7 @@ type screen =
   | Display
   | Buy of step
   | Sell of step
+  | Error of string
   | Quit
 
 type dir =
@@ -32,7 +34,7 @@ type state = {
   quantity : string;
 }
 
-let inital_state : state =
+let initial_state : state =
   {
     screen = Main;
     selected = 0;
@@ -57,10 +59,11 @@ let get_option_bindings scr =
       | Ticker -> [ Sell Quantity; Main ]
       | Quantity -> [ Sell Success; Main ]
       | Success -> [ Main ])
+  | Error _ -> [ Main ]
   | Quit -> []
 
-(* [render_screen st] is a Notty image to display constructed from state [st]*)
-let render_screen st =
+(* [render_image st] is a Notty image to display constructed from state [st]*)
+let render_image st =
   let create_option s u =
     I.(
       if u then string A.(fg white ++ st underline) s else string A.(fg white) s)
@@ -82,8 +85,9 @@ let render_screen st =
         <|> create_option "Quit" (st.selected = 3))
   | Display ->
       I.(
-        create_option "Main menu" (st.selected = 0) <-> void 0 1
-        (* <-> (st.portfolio |> P.display_portfolio |> display_list)) *))
+        create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> (st.portfolio |> P.display_portfolio |> display_list))
   | Buy Ticker | Sell Ticker ->
       I.(
         create_option "Select ticker" (st.selected = 0)
@@ -113,10 +117,16 @@ let render_screen st =
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been sold."
         <-> (st.portfolio |> P.display_portfolio |> display_list))
+  | Error e ->
+      I.(
+        create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg red) "ERROR"
+        <-> string A.(fg white) e)
   | Quit -> I.empty
 
 (* [arrow_clicked st dir] is the updated state with a new selected menu option
-   given direction [dir]*)
+   given direction [dir] *)
 let arrow_clicked st dir =
   let max = (st.screen |> get_option_bindings |> List.length) - 1 in
   let sel =
@@ -126,26 +136,54 @@ let arrow_clicked st dir =
   in
   { st with selected = sel }
 
-(* [enter_clicked st] is the updated state after enter button is clicked*)
+(* [enter_clicked st] is the updated state after enter button is clicked *)
 let enter_clicked st =
   match List.nth (get_option_bindings st.screen) st.selected with
   | Buy Success ->
+      let error = ref "" in
       let updated_portfolio =
-        P.add_stock st.portfolio st.ticker (int_of_string st.quantity)
+        try P.add_stock st.portfolio st.ticker (int_of_string st.quantity) with
+        | NoResultsFound ->
+            error := st.ticker ^ " was not found";
+            st.portfolio
+        | InvalidJSONFormat ->
+            error :=
+              "There was an issue with the API (Invalid JSON format error)";
+            st.portfolio
+        | e ->
+            error := "There was an unresolved error: " ^ Printexc.to_string e;
+            st.portfolio
       in
       {
-        screen = Buy Success;
+        screen =
+          (if st.portfolio = updated_portfolio then Error !error
+           else Buy Success);
         selected = 0;
         portfolio = updated_portfolio;
         ticker = "";
         quantity = "";
       }
   | Sell Success ->
+      let error = ref "" in
       let updated_portfolio =
-        P.remove_stock st.portfolio st.ticker (int_of_string st.quantity)
+        try
+          P.remove_stock st.portfolio st.ticker (int_of_string st.quantity)
+        with
+        | NoResultsFound ->
+            error := st.ticker ^ " was not found";
+            st.portfolio
+        | InvalidJSONFormat ->
+            error :=
+              "There was an issue with the API (Invalid JSON format error)";
+            st.portfolio
+        | e ->
+            error := "There was an unresolved error: " ^ Printexc.to_string e;
+            st.portfolio
       in
       {
-        screen = Sell Success;
+        screen =
+          (if st.portfolio = updated_portfolio then Error !error
+           else Sell Success);
         selected = 0;
         portfolio = updated_portfolio;
         ticker = "";
@@ -178,7 +216,7 @@ let character_clicked st c =
    abstraction [t] and initial state [st], waits for and then processes an
    interactive event *)
 let rec main_loop (t : Term.t) (st : state) =
-  Term.image t (render_screen st);
+  Term.image t (render_image st);
   match Term.event t with
   | `End | `Key (`Escape, []) -> ()
   | `Key (`Arrow `Left, []) | `Key (`Arrow `Up, []) ->
@@ -195,7 +233,7 @@ let rec main_loop (t : Term.t) (st : state) =
 
 let () =
   let t = Term.create () in
-  main_loop t inital_state;
+  main_loop t initial_state;
   Term.release t
 
 (* let () = Api.print_json_results "MSFT" () *)

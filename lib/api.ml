@@ -3,6 +3,7 @@ open Cohttp
 open Cohttp_lwt_unix
 open Yojson.Basic
 open Unix
+open Exceptions
 
 let ping_id (ticker : string) () =
   let uri =
@@ -54,8 +55,8 @@ let print_last_results ticker () =
       match List.rev results with
       | `Assoc result_fields :: _ ->
           print_endline (Yojson.Basic.to_string (`Assoc result_fields))
-      | _ -> invalid_arg "No results found")
-  | _ -> invalid_arg "Invalid JSON format"
+      | _ -> raise NoResultsFound)
+  | _ -> raise InvalidJSONFormat
 
 let get_date_current ticker json_data =
   match json_data with
@@ -69,9 +70,9 @@ let get_date_current ticker json_data =
       | `Assoc result_fields :: _ -> (
           match List.assoc "Date" result_fields with
           | `String date -> date
-          | _ -> invalid_arg "Date not found")
-      | _ -> invalid_arg "No results found")
-  | _ -> invalid_arg "Invalid JSON format"
+          | _ -> raise NoDateFound)
+      | _ -> raise NoResultsFound)
+  | _ -> raise InvalidJSONFormat
 
 let get_price_current ticker json_data =
   match json_data with
@@ -85,9 +86,9 @@ let get_price_current ticker json_data =
       | `Assoc result_fields :: _ -> (
           match List.assoc "Close" result_fields with
           | `Float close_price -> close_price
-          | _ -> invalid_arg "Closing price not found")
-      | _ -> invalid_arg "No results found")
-  | _ -> invalid_arg "Invalid JSON format"
+          | _ -> raise NoClosingPriceFound)
+      | _ -> raise NoResultsFound)
+  | _ -> raise InvalidJSONFormat
 
 let get ticker =
   let json_data = ping_id ticker () in

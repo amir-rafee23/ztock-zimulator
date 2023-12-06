@@ -1,0 +1,4 @@
+exception NoResultsFound
+exception InvalidJSONFormat
+exception NoDateFound
+exception NoClosingPriceFound
