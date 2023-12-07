@@ -7,24 +7,48 @@ module type FileSysType = sig
   val to_user_portfolio : string -> Portfolio.UserPortfolio.t
 end
 
-(* Convert representation type to a string list list. *)
-
 module FileSys : FileSysType = struct
-  let update_file (file : string) (portfolio : Portfolio.UserPortfolio.t) :
+  let rec update_file (file : string) (portfolio : Portfolio.UserPortfolio.t) :
       string =
-    (* Referring to: https://ocaml.org/docs/file-manipulation *)
+    (* Referred to: https://ocaml.org/docs/file-manipulation *)
 
     (* Get the output channel. *)
     let oc = open_out file in
-    let all_info = String_map.bindings portfolio in
-    failwith "unimplemented"
+    let all_info_list = TestPortfolio.display_portfolio_filesys portfolio in
+    let non_title_rows = List.tl all_info_list in
+    write_rows oc file non_title_rows
 
-  (* Get the first key-value pair. *)
-  (* let all_info = String_map.bindings portfolio in failwith "unimplemented" *)
+  (** [write_rows oc file rows] uses [oc], which is positioned at the end of
+      [file], to write each row in [rows] on a new line in [file]. When function
+      has terminated, closes [oc] and returns [file]. Requires: [rows] contains
+      valid non-title rows produced from [Portfolio.display_portfolio_filesys]. *)
+  and write_rows (oc : out_channel) (file : string) (rows : string list list) :
+      string =
+    match rows with
+    | [] ->
+        (* Write nothing now, and no more writing to be done, so close the
+           output channel. *)
+        close_out oc;
+        file
+    | first_row :: remaining_rows ->
+        let first_data_row_string = string_of_row first_row in
+        (* Write the first row. *)
+        Printf.fprintf oc "%s\n" first_data_row_string;
+        (* Handle remaining rows. *)
+        write_rows oc file remaining_rows
 
-  (* Get the output channel. let oc = open_out file in (* Write something. *)
-     Printf.fprintf oc "hi!"; (* Close the output channel. *) close_out oc; (*
-     Return the file name. *) file *)
+  (** [string_of_row row] is a string representation of [row], with each element
+      of [row] being ;-separated. Requires: [row] is a valid, non-empty,
+      non-title row produced from [Portfolio.display_portfolio_filesys].
+
+      E.g string_of_row
+      [["AAPL"; "66"; "32423.2"; "{pb1, qb1, db1}"; "{ps1, qs1, ds1}"]] is
+      ["AAPL; 66; 32423.2; {pb1, qb1, db1}; {ps1, qs1, ds1}"]*)
+  and string_of_row (row : string list) : string =
+    match row with
+    | [ ticker; quantity; ibd; bbs; sbs ] ->
+        ticker ^ "; " ^ quantity ^ "; " ^ ibd ^ "; " ^ bbs ^ "; " ^ sbs
+    | _ -> failwith "Precondition violation."
 
   let to_user_portfolio (file : string) : Portfolio.UserPortfolio.t =
     (* Referring to: https://ocaml.org/docs/file-manipulation *)
