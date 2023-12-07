@@ -7,6 +7,7 @@ open Stocks
 open Uchar
 open Api
 open Exceptions
+module F = Filesys.FileSys
 module P = Portfolio.UserPortfolio
 
 type step =
@@ -34,11 +35,15 @@ type state = {
   quantity : string;
 }
 
+let load_or_empty_data () =
+  try F.to_user_portfolio "data_dir/data.txt"
+  with Sys_error _ -> P.empty_portfolio
+
 let initial_state : state =
   {
     screen = Main;
     selected = 0;
-    portfolio = P.empty_portfolio;
+    portfolio = load_or_empty_data ();
     ticker = "";
     quantity = "";
   }
@@ -231,14 +236,16 @@ let character_clicked st c =
 let rec main_loop (t : Term.t) (st : state) =
   Term.image t (render_image st);
   match Term.event t with
-  | `End | `Key (`Escape, []) -> ()
+  | `End | `Key (`Escape, []) ->
+      F.update_file "data_dir/data.txt" st.portfolio |> ignore
   | `Key (`Arrow `Left, []) | `Key (`Arrow `Up, []) ->
       main_loop t (arrow_clicked st Left)
   | `Key (`Arrow `Right, []) | `Key (`Arrow `Down, []) ->
       main_loop t (arrow_clicked st Right)
   | `Key (`Enter, []) | `Key (`ASCII ' ', []) -> (
       match enter_clicked st with
-      | { screen = Quit; selected = _; portfolio = _ } -> ()
+      | { screen = Quit; selected = _; portfolio = _ } ->
+          F.update_file "data_dir/data.txt" st.portfolio |> ignore
       | new_st -> main_loop t new_st)
   | `Key (`ASCII c, []) -> main_loop t (character_clicked st (Char.escaped c))
   | `Key (`Backspace, []) -> main_loop t (character_clicked st "back")
