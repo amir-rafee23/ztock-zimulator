@@ -70,10 +70,6 @@ module type PortfolioType = sig
       total holding value, initial buy date and time (month/day/year
       hour:min:sec format).*)
 
-  val cost_basis : t -> string -> int option
-  (** The cost-basis of a certain stock held in a portfolio. Returns [None] if
-      the stock is not in the portfolio. *)
-
   val display_portfolio_filesys : t -> string list list
   (** [display_portfolio_filesys portfolio] is a list containing exactly all 
   the data stored in the underlying concrete value of [portfolio], which is, 
@@ -111,6 +107,21 @@ module type UserPortfolioType = sig
   }
 
   include PortfolioType with type t = stock_data String_map.t
+
+  (* [batches_of_string] used in [filesys.ml]. Its spec refers to
+     [batches_to_string], which is why the latter is also included below, even
+     though it is not used outside of [portfolio.ml]. *)
+
+  val batches_to_string : batches_element_data list -> string
+  (** [batches_to_string batches] is the string representation of [batches]. The
+      output has the form:
+      "[{price_1, quantity_1, date_1}; ...; {price_n, quantity_n, date_n}]".
+      Returns "[]" if [batches] is empty. *)
+
+  val batches_of_string : string -> batches_element_data list
+  (** [batches_of_string batches_string] converts [batches_string] to a concrete
+      value. Requires: [batches_string] is a valid string representation of a
+      [batches] value, as defined by [batches_to_string]. *)
 end
 
 module UserPortfolio : UserPortfolioType

@@ -1,6 +1,8 @@
 open Portfolio
 
-(** The user's portfolio data is stored in [data_dir/data.txt]. *)
+(** The user's portfolio data is stored in
+    [CS-3110-Final-Project---zaz/data_dir/data.txt]. Ensure this
+    data_dir/data.txt location exists before running the file system. *)
 
 (** The signature for the user's portfolio data file management system. *)
 module type FileSysType = sig

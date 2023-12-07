@@ -50,23 +50,71 @@ module FileSys : FileSysType = struct
         ticker ^ "; " ^ quantity ^ "; " ^ ibd ^ "; " ^ bbs ^ "; " ^ sbs
     | _ -> failwith "Precondition violation."
 
-  let to_user_portfolio (file : string) : Portfolio.UserPortfolio.t =
-    (* Referring to: https://ocaml.org/docs/file-manipulation *)
+  let rec to_user_portfolio (file : string) : Portfolio.UserPortfolio.t =
+    (* Referred to: https://ocaml.org/docs/file-manipulation *)
 
-    (* Currently trying to just read from a [.txt] file that contains a single
-       line, with the name of the stock ticker. *)
-    let portfolio = TestPortfolio.empty_portfolio in
-    (* Read the first line. *)
+    (* Get the input channel, positioned at the start of [file]. *)
     let ic = open_in file in
+    (* Portfolio to be returned. *)
+    let portfolio = TestPortfolio.empty_portfolio in
+    (* Since [ic] is positioned at the start of [file], [portfolio] is updated
+       to contain exactly all the data in [file], from start to end.*)
+    read_rows ic file portfolio
 
+  (** [read_rows ic file portfolio] updates portfolio to contain exactly all the
+      data in [file] from the current position of [ic] to the end of [file]. *)
+  and read_rows (ic : in_channel) (file : string)
+      (portfolio : Portfolio.UserPortfolio.t) : Portfolio.UserPortfolio.t =
     try
-      let stock = input_line ic in
-      close_in ic;
-      TestPortfolio.add_stock portfolio stock
-        100 (* Just add some random quantity. *)
+      (* Read the first line, discard \n. *)
+      let line = input_line ic in
+      (* Add the first line's data to [portfolio]. *)
+      let portfolio' = add_line_to_portfolio line portfolio in
+      (* Add the remaining lines. *)
+      let portfolio'' = read_rows ic file portfolio' in
+      portfolio''
     with e ->
-      (* some unexpected error occurs *)
-      close_in_noerr ic;
-      (* emergency closing *)
-      raise e
+      (* Reached the end of [file], meaning [file] was empty, so no updating of
+         [portfolio]. *)
+      if e = End_of_file then (
+        close_in ic;
+        portfolio)
+      else (
+        (* Some unexpected exception occurs. *)
+        close_in_noerr ic;
+        (* Emergency closing. *)
+        raise e)
+
+  (** [add_line_to_portfolio line portfolio] updates [portfolio] to contain
+      exactly all the information in [line], and returns it. Requires: [line] is
+      a valid line from a [.txt] file created using [update_file]. *)
+  and add_line_to_portfolio (line : string)
+      (portfolio : Portfolio.UserPortfolio.t) : Portfolio.UserPortfolio.t =
+    match line with
+    | "" -> portfolio
+    | line ->
+        (* Extract data from [line]. *)
+        let all_line_data =
+          String.split_on_char ';' line |> List.map (fun s -> String.trim s)
+        in
+        (* Key to be inserted into [portfolio]. *)
+        let key : string = List.nth all_line_data 0 in
+        (* Build up the corresponding value to be inserted into [portfolio]. *)
+        let q = List.nth all_line_data 1 |> int_of_string in
+        let ibd = List.nth all_line_data 2 |> float_of_string in
+        let bbs = List.nth all_line_data 3 |> TestPortfolio.batches_of_string in
+        let sbs = List.nth all_line_data 4 |> TestPortfolio.batches_of_string in
+        (* Corresponding value to be inserted into [portfolio]. *)
+        let value : Portfolio.UserPortfolio.stock_data =
+          {
+            quantity = q;
+            initial_buy_date = ibd;
+            buy_batches = bbs;
+            sell_batches = sbs;
+          }
+        in
+        (* Insert the key-value pair. *)
+        let portfolio' = String_map.add key value portfolio in
+        (* Final result. *)
+        portfolio'
 end

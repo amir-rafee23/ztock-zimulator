@@ -197,26 +197,48 @@ let stock_price_over_time_tests =
        points.") *)
   ]
 
+(* File and portfolios used in testing [Filesys.update_file],
+   [Filesys.to_user_portfolio]. *)
+let file = "data_dir/data.txt"
+
+let filesys_test_portfolio1 =
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 100
+
+let filesys_test_portfolio2 =
+  Test_Portfolio.add_stock filesys_test_portfolio1 "AAPL" 55
+
+(* These tests all work with [CS-3110-Final-Project---zaz/data_dir/data.txt]*)
 let filesys_tests =
   [
-    (* ( " Convert an empty data file to a portfolio. " >:: fun _ ->
-       assert_equal Test_Portfolio.empty_portfolio
-       (Test_Filesys.to_user_portfolio "data.txt") ); *)
-    ( " Convert an empty portfolio to a data file. " >:: fun _ ->
+    (* It was tested interactively that an empty portfolio is correctly
+       converted to a data file. *)
+    ( " Convert an empty portfolio to a data file and back. " >:: fun _ ->
       assert_equal Test_Portfolio.empty_portfolio
         (Test_Portfolio.empty_portfolio
-        |> Test_Filesys.update_file "data_dir/data.txt"
+        |> Test_Filesys.update_file file
         |> Test_Filesys.to_user_portfolio) );
+    ( " Convert a non-empty portfolio to a data file and back. " >:: fun _ ->
+      assert_equal filesys_test_portfolio1
+        (ignore (Test_Filesys.update_file file filesys_test_portfolio1);
+         Test_Filesys.to_user_portfolio file) );
+    (* ( " Convert non-empty data file to portfolio, add stock, update data
+       file, \ reconvert to portfolio. " >:: fun _ -> assert_equal
+       (Test_Portfolio.display_portfolio filesys_test_portfolio2) (let p =
+       Test_Filesys.to_user_portfolio file in let p' = Test_Portfolio.add_stock
+       p "AAPL" 55 in ignore (Test_Filesys.update_file file p');
+       Test_Filesys.to_user_portfolio file |> Test_Portfolio.display_portfolio)
+       ); *)
   ]
 
 let suite =
-  "test suite for Portfolio.ml"
+  "test suite for portfolio.ml, filesys.ml"
   >::: List.flatten
          [
            contains_stock_tests;
            add_stock_tests;
            remove_stock_tests;
            batches_data_tests;
+           filesys_tests;
          ]
 
 let _ = run_test_tt_main suite
