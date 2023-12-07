@@ -78,12 +78,18 @@ module type PortfolioType = sig
   (** [display_portfolio_filesys portfolio] is a list containing exactly all 
   the data stored in the underlying concrete value of [portfolio], which is, 
   for each stock, the ticker name, quantity currently held, initial buy date, 
-  buy batches and sell batches. . 
+  buy batches and sell batches. Each inner list is a row, with each row itself 
+  being a list of column entries.
       
       Example output: 
-      [["ticker: AAPL"]; ["quantity: 50"]; ["initial_buy_date: 324234.02"]; 
-      ["buy_batches: [{pb_1, qb_1, db_1}; ... ;{pb_m,qb_m,db_m}]"]; 
-      ["sell_batches: [{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]]. *)
+
+    [
+        ["ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches"];
+        
+        ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}; ... ;{pb_m,qb_m,db_m}]"; 
+        "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
+    ]
+ *)
 end
 
 module String_map : Map.S with type key = string

@@ -261,14 +261,9 @@ module UserPortfolio = struct
 
   (* TODO: Make more concise, add test caes. *)
   let rec display_portfolio_filesys (portfolio : t) : string list list =
-    (* List to be returned. *)
-    let result =
+    let title_row =
       [
-        [ "ticker" ];
-        [ "quantity" ];
-        [ "initial buy date" ];
-        [ "buy batches" ];
-        [ "sell batches" ];
+        "ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches";
       ]
     in
 
@@ -276,55 +271,32 @@ module UserPortfolio = struct
     let all_info = String_map.bindings portfolio in
 
     match all_info with
-    | [] -> result (* Empty [portfolio]. *)
-    | (ticker, stock_info) :: _ ->
-        (* Add the head's info to [result] first. *)
-
-        (* Add the ticker. *)
-        let new_tickers = List.nth result 0 @ [ ticker ] in
-        (* Add the quantity. *)
-        let new_quantities =
-          List.nth result 1 @ [ string_of_int stock_info.quantity ]
-        in
-        (* Add the initial buy date. *)
-        let new_ibds =
-          List.nth result 2 @ [ string_of_float stock_info.initial_buy_date ]
-        in
-        (* Add the buy batches. *)
-        let new_bbs =
-          List.nth result 3 @ [ batches_to_string stock_info.buy_batches ]
-        in
-        (* Add the sell batches. *)
-        let new_sbs =
-          List.nth result 4 @ [ batches_to_string stock_info.sell_batches ]
+    | [] -> [ title_row ] (* Empty [portfolio]. *)
+    | (ticker, stock_info) :: _ -> (
+        (* Collect the head's info first. *)
+        let head_row =
+          [
+            ticker;
+            string_of_int stock_info.quantity;
+            string_of_float stock_info.initial_buy_date;
+            batches_to_string stock_info.buy_batches;
+            batches_to_string stock_info.sell_batches;
+          ]
         in
 
         (* Handle the tail now. *)
         let remaining_portfolio = String_map.remove ticker portfolio in
         let tail_list = display_portfolio_filesys remaining_portfolio in
 
-        (* Collect the tail's data. Removal of column titles performed. *)
-        let tail_tickers = List.nth tail_list 0 |> List.tl in
-        let tail_quantities = List.nth tail_list 1 |> List.tl in
-        let tail_ibds = List.nth tail_list 2 |> List.tl in
-        let tail_bbs = List.nth tail_list 3 |> List.tl in
-        let tail_sbs = List.nth tail_list 4 |> List.tl in
+        (* For final output. Get the non-title rows from [tail_list]. *)
+        match List.tl tail_list with
+        | [] -> [ title_row; head_row ]
+        | tail_rows -> title_row :: head_row :: tail_rows)
 
-        (* Build up the final data columns. *)
-        let final_tickers = new_tickers @ tail_tickers in
-        let final_quantities = new_quantities @ tail_quantities in
-        let final_ibds = new_ibds @ tail_ibds in
-        let final_bbs = new_bbs @ tail_bbs in
-        let final_sbs = new_sbs @ tail_sbs in
-
-        (* Output. *)
-        [ final_tickers; final_quantities; final_ibds; final_bbs; final_sbs ]
-
-  (* Need to convert [sell_batches] to a string. *)
-
-  (* [batches_to_string batches] is the string representation of [batches]. The
-     output has the form: "[{price_1; quantity_1; date_1}; ...; {price_n;
-     quantity_n; date_n}]". Returns "[]" if [batches] is empty. *)
+  (** [batches_to_string batches] is the string representation of [batches]. The
+      output has the form:
+      "[{price_1; quantity_1; date_1}; ...; {price_n; quantity_n; date_n}]".
+      Returns "[]" if [batches] is empty. *)
   and batches_to_string (batches : batches_element_data list) : string =
     match batches with
     | [] -> "[]"
