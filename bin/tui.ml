@@ -153,18 +153,31 @@ let enter_clicked st =
   match List.nth (get_option_bindings st.screen) st.selected with
   | Buy Success ->
       let error = ref "" in
+      let int_quantity =
+        match int_of_string_opt st.quantity with
+        | Some i ->
+            if i > 0 then i
+            else (
+              error := "Quantity must be greater than or equal to 0!";
+              -1)
+        | None ->
+            error := "Quantity must be an integer!";
+            -1
+      in
       let updated_portfolio =
-        try P.add_stock st.portfolio st.ticker (int_of_string st.quantity) with
-        | NoResultsFound ->
-            error := st.ticker ^ " was not found!";
-            st.portfolio
-        | InvalidJSONFormat ->
-            error :=
-              "There was an issue with the API (Invalid JSON format error)";
-            st.portfolio
-        | e ->
-            error := "There was an unresolved error: " ^ Printexc.to_string e;
-            st.portfolio
+        if !error = "" then (
+          try P.add_stock st.portfolio st.ticker int_quantity with
+          | NoResultsFound ->
+              error := st.ticker ^ " was not found!";
+              st.portfolio
+          | InvalidJSONFormat ->
+              error :=
+                "There was an issue with the API (Invalid JSON format error)";
+              st.portfolio
+          | e ->
+              error := "There was an unresolved error: " ^ Printexc.to_string e;
+              st.portfolio)
+        else st.portfolio
       in
       {
         screen =
@@ -177,26 +190,37 @@ let enter_clicked st =
       }
   | Sell Success ->
       let error = ref "" in
+      let int_quantity =
+        match int_of_string_opt st.quantity with
+        | Some i ->
+            if i > 0 then i
+            else (
+              error := "Quantity must be greater than or equal to 0!";
+              -1)
+        | None ->
+            error := "Quantity must be an integer!";
+            -1
+      in
       let updated_portfolio =
-        try
-          P.remove_stock st.portfolio st.ticker (int_of_string st.quantity)
-        with
-        | TickerNotHeld ->
-            error := st.ticker ^ " is not in your portfolio!";
-            st.portfolio
-        | ExceededQuantity ->
-            error := "You cannot sell more shares than you own!";
-            st.portfolio
-        | NoResultsFound ->
-            error := st.ticker ^ " was not found!";
-            st.portfolio
-        | InvalidJSONFormat ->
-            error :=
-              "There was an issue with the API (Invalid JSON format error)";
-            st.portfolio
-        | e ->
-            error := "There was an unresolved error: " ^ Printexc.to_string e;
-            st.portfolio
+        if !error = "" then (
+          try P.remove_stock st.portfolio st.ticker int_quantity with
+          | TickerNotHeld ->
+              error := st.ticker ^ " is not in your portfolio!";
+              st.portfolio
+          | ExceededQuantity ->
+              error := "You cannot sell more shares than you own!";
+              st.portfolio
+          | NoResultsFound ->
+              error := st.ticker ^ " was not found!";
+              st.portfolio
+          | InvalidJSONFormat ->
+              error :=
+                "There was an issue with the API (Invalid JSON format error)";
+              st.portfolio
+          | e ->
+              error := "There was an unresolved error: " ^ Printexc.to_string e;
+              st.portfolio)
+        else st.portfolio
       in
       {
         screen =
