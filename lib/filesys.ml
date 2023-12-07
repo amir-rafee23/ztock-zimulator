@@ -16,9 +16,11 @@ module FileSys : FileSysType = struct
 
     (* Get the output channel. *)
     let oc = open_out file in
-
-    (* Get the first key-value pair. *)
+    let all_info = String_map.bindings portfolio in
     failwith "unimplemented"
+
+  (* Get the first key-value pair. *)
+  (* let all_info = String_map.bindings portfolio in failwith "unimplemented" *)
 
   (* Get the output channel. let oc = open_out file in (* Write something. *)
      Printf.fprintf oc "hi!"; (* Close the output channel. *) close_out oc; (*

@@ -1,7 +1,13 @@
 open Unix
 open Api
 
-(** The signature of a user's portfolio. *)
+module String_map : Map.S with type key = string = Map.Make (struct
+  type t = string
+
+  (* Note that [compare] works on the keys, which are strings. *)
+  let compare = String.compare
+end)
+
 module type PortfolioType = sig
   type t
 
@@ -17,18 +23,24 @@ module type PortfolioType = sig
   val display_portfolio_filesys : t -> string list list
 end
 
-(** A Map whose keys are strings. *)
-module String_map : Map.S with type key = string = Map.Make (struct
-  type t = string
+module type UserPortfolioType = sig
+  type batches_element_data = {
+    price : float;
+    quantity : int;
+    date : float;
+  }
 
-  (* Note that [compare] works on the keys, which are strings. *)
-  let compare = String.compare
-end)
+  type stock_data = {
+    quantity : int;
+    initial_buy_date : float;
+    buy_batches : batches_element_data list;
+    sell_batches : batches_element_data list;
+  }
 
-(* No module type annotation to allow access to the concrete values, for
-   [filesys]. Separate check that [UserPortfolio] satisfies [PortfolioType] done
-   later. *)
-module UserPortfolio = struct
+  include PortfolioType with type t = stock_data String_map.t
+end
+
+module UserPortfolio : UserPortfolioType = struct
   (** Representation type: A Map from stock tickers (keys) to data regarding the
       stock: 1) quantity currently held 2) most recent date the stock went from
       being absent to present in the portfolio 3) buy batches 4) sell batches
@@ -329,6 +341,3 @@ end
    portfolio. *)
 
 (* Worry about the cost-basis function later. *)
-
-(* Check that [UserPortfolio] satisfies [PortfolioType]. *)
-module _ : PortfolioType = UserPortfolio

@@ -1,4 +1,4 @@
-(** The signature of a user's portfolio. *)
+(** The general signature of a user's portfolio. *)
 module type PortfolioType = sig
   type t
   (** Type representing the data in the portfolio. *)
@@ -88,12 +88,30 @@ module type PortfolioType = sig
         
         ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}; ... ;{pb_m,qb_m,db_m}]"; 
         "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
-    ]
+    ] 
  *)
 end
 
 module String_map : Map.S with type key = string
 (** A Map whose keys are strings. *)
 
-module UserPortfolio : PortfolioType
+(** Repreentation type exposed for use in [filesys.ml]. *)
+module type UserPortfolioType = sig
+  type batches_element_data = {
+    price : float;
+    quantity : int;
+    date : float;
+  }
+
+  type stock_data = {
+    quantity : int;
+    initial_buy_date : float;
+    buy_batches : batches_element_data list;
+    sell_batches : batches_element_data list;
+  }
+
+  include PortfolioType with type t = stock_data String_map.t
+end
+
+module UserPortfolio : UserPortfolioType
 (** A user's portfolio. *)
