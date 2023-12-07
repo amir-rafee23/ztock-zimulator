@@ -72,7 +72,6 @@ let remove_stock_test_portfolio3 =
 let remove_stock_test_portfolio4 =
   Test_Portfolio.remove_stock remove_stock_test_portfolio2 "AAPL" 10
 
-(* TODO: More comprehensive tests. *)
 let remove_stock_tests =
   [
     ( "Removing a stock s from an empty portfolio - presence of s. " >:: fun _ ->
@@ -168,6 +167,8 @@ let batches_data_tests =
     );
   ]
 
+(* TODO: possibly remove, since unimplemented. *)
+
 (* Portfolios used to test [stock_price_over_time]. *)
 let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
 
@@ -197,25 +198,51 @@ let stock_price_over_time_tests =
        points.") *)
   ]
 
+(* File and portfolios used in testing [Filesys.update_file],
+   [Filesys.to_user_portfolio]. *)
+let file = "data_dir/data.txt"
+
+let filesys_test_portfolio1 =
+  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 100
+
+let filesys_test_portfolio2 =
+  Test_Portfolio.add_stock filesys_test_portfolio1 "AAPL" 55
+
+(* These tests all work with [CS-3110-Final-Project---zaz/data_dir/data.txt]*)
 let filesys_tests =
-  [ (* ( " Create a new data file, check its existence. " >:: fun _ ->
-       assert_equal true (let file = Test_Filesys.create_file in Sys.file_exists
-       file) ); *)
-    (* ( " Convert an empty data file to a portfolio. " >:: fun _ ->
-       assert_equal Test_Portfolio.empty_portfolio
-       (Test_Filesys.to_user_portfolio "data.txt") ); ( " Convert an empty
-       portfolio to a data file. " >:: fun _ -> assert_equal
-       Test_Portfolio.empty_portfolio (Test_Portfolio.empty_portfolio |>
-       Test_Filesys.to_file |> Test_Filesys.to_user_portfolio) ); *) ]
+  [
+    (* It was tested interactively that an empty portfolio is correctly
+       converted to a data file. *)
+    ( " Convert an empty portfolio to a data file and back. " >:: fun _ ->
+      assert_equal Test_Portfolio.empty_portfolio
+        (Test_Portfolio.empty_portfolio
+        |> Test_Filesys.update_file file
+        |> Test_Filesys.to_user_portfolio) );
+    ( " Convert a non-empty portfolio to a data file and back. " >:: fun _ ->
+      assert_equal filesys_test_portfolio1
+        (ignore (Test_Filesys.update_file file filesys_test_portfolio1);
+         Test_Filesys.to_user_portfolio file) );
+    (* TODO: Add more complex tests. Possible concern: commented-out case below
+       was taking too long to run.*)
+
+    (* ( " Convert non-empty data file to portfolio, add stock, update data
+       file, \ reconvert to portfolio. " >:: fun _ -> assert_equal
+       (Test_Portfolio.display_portfolio filesys_test_portfolio2) (let p =
+       Test_Filesys.to_user_portfolio file in let p' = Test_Portfolio.add_stock
+       p "AAPL" 55 in ignore (Test_Filesys.update_file file p');
+       Test_Filesys.to_user_portfolio file |> Test_Portfolio.display_portfolio)
+       ); *)
+  ]
 
 let suite =
-  "test suite for Portfolio.ml"
+  "test suite for portfolio.ml, filesys.ml"
   >::: List.flatten
          [
            contains_stock_tests;
            add_stock_tests;
            remove_stock_tests;
            batches_data_tests;
+           filesys_tests;
          ]
 
 let _ = run_test_tt_main suite

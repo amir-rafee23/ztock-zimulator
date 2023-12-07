@@ -1,4 +1,4 @@
-(** The signature of a user's portfolio. *)
+(** The general signature of a user's portfolio. *)
 module type PortfolioType = sig
   type t
   (** Type representing the data in the portfolio. *)
@@ -70,13 +70,59 @@ module type PortfolioType = sig
       total holding value, initial buy date and time (month/day/year
       hour:min:sec format).*)
 
-  val cost_basis : t -> string -> int option
-  (** The cost-basis of a certain stock held in a portfolio. Returns [None] if
-      the stock is not in the portfolio. *)
+  val display_portfolio_filesys : t -> string list list
+  (** [display_portfolio_filesys portfolio] is a list containing exactly all 
+  the data stored in the underlying concrete value of [portfolio], which is, 
+  for each stock, the ticker name, quantity currently held, initial buy date, 
+  buy batches and sell batches. Each inner list is a row, with each row itself 
+  being a list of column entries.
+      
+      Example output: 
+
+    [
+        ["ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches"];
+        
+        ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}; ... ;{pb_m, qb_m, db_m}]"; 
+        "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
+    ] 
+ *)
 end
 
 module String_map : Map.S with type key = string
 (** A Map whose keys are strings. *)
 
-module UserPortfolio : PortfolioType
+(** Repreentation type exposed for use in [filesys.ml]. *)
+module type UserPortfolioType = sig
+  type batches_element_data = {
+    price : float;
+    quantity : int;
+    date : float;
+  }
+
+  type stock_data = {
+    quantity : int;
+    initial_buy_date : float;
+    buy_batches : batches_element_data list;
+    sell_batches : batches_element_data list;
+  }
+
+  include PortfolioType with type t = stock_data String_map.t
+
+  (* [batches_of_string] used in [filesys.ml]. Its spec refers to
+     [batches_to_string], which is why the latter is also included below, even
+     though it is not used outside of [portfolio.ml]. *)
+
+  val batches_to_string : batches_element_data list -> string
+  (** [batches_to_string batches] is the string representation of [batches]. The
+      output has the form:
+      "[{price_1, quantity_1, date_1}; ...; {price_n, quantity_n, date_n}]".
+      Returns "[]" if [batches] is empty. *)
+
+  val batches_of_string : string -> batches_element_data list
+  (** [batches_of_string batches_string] converts [batches_string] to a concrete
+      value. Requires: [batches_string] is a valid string representation of a
+      [batches] value, as defined by [batches_to_string]. *)
+end
+
+module UserPortfolio : UserPortfolioType
 (** A user's portfolio. *)

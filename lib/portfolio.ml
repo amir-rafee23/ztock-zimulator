@@ -2,7 +2,13 @@ open Unix
 open Api
 open Exceptions
 
-(** The signature of a user's portfolio. *)
+module String_map : Map.S with type key = string = Map.Make (struct
+  type t = string
+
+  (* Note that [compare] works on the keys, which are strings. *)
+  let compare = String.compare
+end)
+
 module type PortfolioType = sig
   type t
 
@@ -14,18 +20,30 @@ module type PortfolioType = sig
   val remove_stock : t -> string -> int -> t
   val batches_data : t -> string -> string -> (float * int * float) list
   val display_portfolio : t -> string list
-  val cost_basis : t -> string -> int option
+  val display_portfolio_filesys : t -> string list list
 end
 
-(** A Map whose keys are strings. *)
-module String_map : Map.S with type key = string = Map.Make (struct
-  type t = string
+module type UserPortfolioType = sig
+  type batches_element_data = {
+    price : float;
+    quantity : int;
+    date : float;
+  }
 
-  (* Note that [compare] works on the keys, which are strings. *)
-  let compare = String.compare
-end)
+  type stock_data = {
+    quantity : int;
+    initial_buy_date : float;
+    buy_batches : batches_element_data list;
+    sell_batches : batches_element_data list;
+  }
 
-module UserPortfolio : PortfolioType = struct
+  include PortfolioType with type t = stock_data String_map.t
+
+  val batches_to_string : batches_element_data list -> string
+  val batches_of_string : string -> batches_element_data list
+end
+
+module UserPortfolio : UserPortfolioType = struct
   (** Representation type: A Map from stock tickers (keys) to data regarding the
       stock: 1) quantity currently held 2) most recent date the stock went from
       being absent to present in the portfolio 3) buy batches 4) sell batches
@@ -68,6 +86,7 @@ module UserPortfolio : PortfolioType = struct
     (* [stock] in portfolio. *)
     | Some x -> x.quantity
 
+  (* TODO: possibly remove. *)
   let stock_price_over_time (portfolio : t) (stock : string) : int list =
     failwith "unimplemented"
 
@@ -113,7 +132,6 @@ module UserPortfolio : PortfolioType = struct
 
       (* New [buy_batches]. *)
       let old_b = (String_map.find stock portfolio).buy_batches in
-      (* TODO: Real-time price.*)
       let b =
         old_b
         @ [
@@ -161,7 +179,6 @@ module UserPortfolio : PortfolioType = struct
       if q = 0 then String_map.remove stock portfolio
       else
         (* New sell_batches. *)
-        (*TODO: price*)
         let s =
           (String_map.find stock portfolio).sell_batches
           @ [
@@ -249,8 +266,103 @@ module UserPortfolio : PortfolioType = struct
           let remaining_portfolio = String_map.remove stock portfolio in
           str @ [ ""; "" ] @ display_portfolio remaining_portfolio
 
-  let cost_basis (portfolio : t) (stock : string) : int option =
-    failwith "unimplemented"
+  (* TODO: Make more concise, add test caes. *)
+  let rec display_portfolio_filesys (portfolio : t) : string list list =
+    let title_row =
+      [
+        "ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches";
+      ]
+    in
+
+    (* All the information in [portfolio]. *)
+    let all_info = String_map.bindings portfolio in
+
+    match all_info with
+    | [] -> [ title_row ] (* Empty [portfolio]. *)
+    | (ticker, stock_info) :: _ -> (
+        (* Collect the head's info first. *)
+        let head_row =
+          [
+            ticker;
+            string_of_int stock_info.quantity;
+            string_of_float stock_info.initial_buy_date;
+            batches_to_string stock_info.buy_batches;
+            batches_to_string stock_info.sell_batches;
+          ]
+        in
+
+        (* Handle the tail now. *)
+        let remaining_portfolio = String_map.remove ticker portfolio in
+        let tail_list = display_portfolio_filesys remaining_portfolio in
+
+        (* For final output. Get the non-title rows from [tail_list]. *)
+        match List.tl tail_list with
+        | [] -> [ title_row; head_row ]
+        | tail_rows -> title_row :: head_row :: tail_rows)
+
+  and batches_to_string (batches : batches_element_data list) : string =
+    match batches with
+    | [] -> "[]"
+    | batch :: t ->
+        let batch_string =
+          "{"
+          ^ string_of_float batch.price
+          ^ ", "
+          ^ string_of_int batch.quantity
+          ^ ", " ^ string_of_float batch.date ^ "}"
+        in
+
+        let t_string = batches_to_string t in
+
+        begin
+          match t_string with
+          | "[]" -> "[" ^ batch_string ^ "]"
+          | t_string ->
+              "[" ^ batch_string ^ "; "
+              (* Remove the opening "[". *)
+              ^ String.sub t_string 1 (String.length t_string - 1)
+        end
+
+  and batches_of_string (batches_string : string) : batches_element_data list =
+    if batches_string = "[]" then []
+    else
+      (* A list of each individual batch as a string. *)
+      let list_individual_batch_string =
+        (* Remove the opening and closing square braces. *)
+        let s =
+          String.sub batches_string 1 (String.length batches_string - 2)
+        in
+        String.split_on_char ';' s |> List.map (fun s -> String.trim s)
+      in
+
+      (* Convert each individual batch string to a concrete
+         [batches_element_data]. *)
+      let batches_list =
+        List.map individual_batch_of_string list_individual_batch_string
+      in
+      (* Final output. *)
+      batches_list
+
+  (** [individual_batch_of_string b] is the concrete value of [b]. Requires: [b]
+      is a valid string representation of an individual batch (as defined by
+      [batches_to_string]). In particular, [b] is not the empty string. *)
+  and individual_batch_of_string (b : string) : batches_element_data =
+    (* Assert (part of) the precondition. *)
+    assert (b <> "");
+    (* Extract the data form the batch. *)
+    let b_data =
+      (* Remove the opening and closing curly braces. *)
+      let s = String.sub b 1 (String.length b - 2) in
+
+      String.split_on_char ',' s |> List.map (fun s -> String.trim s)
+    in
+    let price = List.nth b_data 0 |> float_of_string in
+    let quantity = List.nth b_data 1 |> int_of_string in
+    let date = List.nth b_data 2 |> float_of_string in
+    (* Build up the batch. *)
+    let batch = { price; quantity; date } in
+    (* Final output. *)
+    batch
 end
 
 (* TODO: *)
