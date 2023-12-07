@@ -72,7 +72,6 @@ let remove_stock_test_portfolio3 =
 let remove_stock_test_portfolio4 =
   Test_Portfolio.remove_stock remove_stock_test_portfolio2 "AAPL" 10
 
-(* TODO: More comprehensive tests. *)
 let remove_stock_tests =
   [
     ( "Removing a stock s from an empty portfolio - presence of s. " >:: fun _ ->
@@ -168,6 +167,8 @@ let batches_data_tests =
     );
   ]
 
+(* TODO: possibly remove, since unimplemented. *)
+
 (* Portfolios used to test [stock_price_over_time]. *)
 let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
 
@@ -221,6 +222,9 @@ let filesys_tests =
       assert_equal filesys_test_portfolio1
         (ignore (Test_Filesys.update_file file filesys_test_portfolio1);
          Test_Filesys.to_user_portfolio file) );
+    (* TODO: Add more complex tests. Possible concern: commented-out case below
+       was taking too long to run.*)
+
     (* ( " Convert non-empty data file to portfolio, add stock, update data
        file, \ reconvert to portfolio. " >:: fun _ -> assert_equal
        (Test_Portfolio.display_portfolio filesys_test_portfolio2) (let p =

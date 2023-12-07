@@ -85,6 +85,7 @@ module UserPortfolio : UserPortfolioType = struct
     (* [stock] in portfolio. *)
     | Some x -> x.quantity
 
+  (* TODO: possibly remove. *)
   let stock_price_over_time (portfolio : t) (stock : string) : int list =
     failwith "unimplemented"
 
