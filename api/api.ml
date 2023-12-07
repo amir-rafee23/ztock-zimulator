@@ -3,7 +3,7 @@ open Cohttp
 open Cohttp_lwt_unix
 open Yojson.Basic
 open Unix
-open Exceptions
+open Exception
 
 let ping (ticker : string) (uri : Uri.t) () = 
   let headers =
