@@ -6,7 +6,7 @@ open Notty_unix
 open Stocks
 open Uchar
 open Api
-open Exceptions
+open Exception
 module F = Filesys.FileSys
 module P = Portfolio.UserPortfolio
 

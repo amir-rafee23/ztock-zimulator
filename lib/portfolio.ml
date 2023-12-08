@@ -1,6 +1,6 @@
 open Unix
 open Api
-open Exceptions
+open Exception
 
 module String_map : Map.S with type key = string = Map.Make (struct
   type t = string

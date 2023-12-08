@@ -3,15 +3,9 @@ open Cohttp
 open Cohttp_lwt_unix
 open Yojson.Basic
 open Unix
-open Exceptions
+open Exception
 
-let ping_id (ticker : string) () =
-  let uri =
-    Uri.of_string
-      ("https://apistocks.p.rapidapi.com/intraday?symbol=" ^ ticker
-     ^ "&interval=5min&maxreturn=100")
-  in
-
+let ping (ticker : string) (uri : Uri.t) () =
   let headers =
     Header.init () |> fun h ->
     Header.add h "X-RapidAPI-Key"
@@ -25,10 +19,25 @@ let ping_id (ticker : string) () =
       let json = Yojson.Basic.from_string body_str in
       Lwt.return json )
 
+let ping_id (ticker : string) () =
+  let uri =
+    Uri.of_string
+      ("https://apistocks.p.rapidapi.com/intraday?symbol=" ^ ticker
+     ^ "&interval=5min&maxreturn=100")
+  in
+  ping ticker uri ()
+
+let ping_day ticker (start_day : string) (end_day : string) () =
+  let uri =
+    Uri.of_string
+      ("https://apistocks.p.rapidapi.com/daily?symbol=" ^ ticker ^ "&dateStart="
+     ^ start_day ^ "&dateEnd=" ^ end_day)
+  in
+  ping ticker uri ()
+
 let print_json ticker () =
   let json_result = ping_id ticker () in
-  let json_string = Yojson.Basic.pretty_to_string json_result in
-  print_endline json_string
+  Yojson.Basic.pretty_to_string json_result
 
 let print_json_results ticker () =
   let json_result = ping_id ticker () in
@@ -39,9 +48,8 @@ let print_json_results ticker () =
         | `List results -> results
         | _ -> []
       in
-      let results_string = Yojson.Basic.pretty_to_string (`List results) in
-      print_endline results_string
-  | _ -> print_endline "Invalid JSON format"
+      Yojson.Basic.pretty_to_string (`List results)
+  | _ -> raise InvalidJSONFormat
 
 let print_last_results ticker () =
   let json_data = ping_id ticker () in
@@ -54,7 +62,7 @@ let print_last_results ticker () =
       in
       match List.rev results with
       | `Assoc result_fields :: _ ->
-          print_endline (Yojson.Basic.to_string (`Assoc result_fields))
+          Yojson.Basic.to_string (`Assoc result_fields)
       | _ -> raise NoResultsFound)
   | _ -> raise InvalidJSONFormat
 
@@ -90,12 +98,18 @@ let get_price_current ticker json_data =
       | _ -> raise NoResultsFound)
   | _ -> raise InvalidJSONFormat
 
-let get ticker =
+let get_id ticker =
   let json_data = ping_id ticker () in
   (get_price_current ticker json_data, get_date_current ticker json_data)
 
-let get_price ticker = fst (get ticker)
+let get_price ticker = fst (get_id ticker)
 let local_time = Unix.localtime (Unix.time ())
+
+let get_yr_m_d t =
+  let year = Printf.sprintf "%04d" (t.tm_year + 1900) in
+  let month = Printf.sprintf "%02d" (t.tm_mon + 1) in
+  let day = Printf.sprintf "%02d" t.tm_mday in
+  year ^ "-" ^ month ^ "-" ^ day
 
 let get_time =
   let get_hr_min =
@@ -109,11 +123,7 @@ let get_time =
     let min = Printf.sprintf "%02d" rounded_min in
     hr ^ ":" ^ min
   in
-  let t = local_time in
-  let year = Printf.sprintf "%04d" (t.tm_year + 1900) in
-  let month = Printf.sprintf "%02d" (t.tm_mon + 1) in
-  let day = Printf.sprintf "%02d" t.tm_mday in
-  year ^ "-" ^ month ^ "-" ^ day ^ " " ^ get_hr_min
+  get_yr_m_d local_time ^ " " ^ get_hr_min
 
 let unix_time_of_string datetime_str =
   let split_datetime datetime_str =
