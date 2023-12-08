@@ -18,6 +18,7 @@ type step =
 type screen =
   | Main
   | Display
+  | DisplayPaginate of int
   | Buy of step
   | Sell of step
   | Error of string
@@ -31,33 +32,65 @@ type state = {
   screen : screen;
   selected : int;
   portfolio : P.t;
+  portfolio_display : string list;
   ticker : string;
   quantity : string;
+  height : int;
+  width : int;
 }
+
+(* [sublist l i j] is a sub-list of list [l] from index [i] (inclusive) to index
+   [j] (exclusive)*)
+let sublist l i j =
+  let rec take l n =
+    if n = 0 then []
+    else
+      match l with
+      | [] -> []
+      | h :: t -> h :: take t (n - 1)
+  in
+  let rec drop l n =
+    if n = 0 then l
+    else
+      match l with
+      | [] -> []
+      | h :: t -> drop t (n - 1)
+  in
+  take (drop l i) (j - i)
 
 let load_or_empty_data () =
   try F.to_user_portfolio "data_dir/data.txt"
   with Sys_error _ -> P.empty_portfolio
 
 let initial_state : state =
+  let p = load_or_empty_data () in
   {
     screen = Main;
     selected = 0;
-    portfolio = load_or_empty_data ();
+    portfolio = p;
+    portfolio_display = P.display_portfolio p;
     ticker = "";
     quantity = "";
+    height = 0;
+    width = 0;
   }
 
-let title =
+let title st =
   I.(
     void 0 3
-    <-> (void 5 0 <|> string A.(fg blue) "ZAZ STOCK SIMULATOR")
-    </> (string A.(fg black ++ bg blue) "|----------------------------|"
-        <-> (char A.(fg black ++ bg blue) '|' 1 5
-            <|> void 28 0
-            <|> char A.(fg black ++ bg blue) '|' 1 5)
-        <-> string A.(fg black ++ bg blue) "|----------------------------|")
-    <-> void 0 1)
+    <-> (void ((st.width / 2) - 9) 0
+        <|> string A.(fg blue) "ZAZ STOCK SIMULATOR")
+    </>
+    let line =
+      char A.(fg black ++ bg blue) '|' 1 1
+      <|> char A.(fg black ++ bg blue) '-' (st.width - 2) 1
+      <|> char A.(fg black ++ bg blue) '|' 1 1
+    in
+    line
+    <-> (char A.(fg black ++ bg blue) '|' 1 5
+        <|> void (st.width - 2) 0
+        <|> char A.(fg black ++ bg blue) '|' 1 5)
+    <-> line <-> void 0 1)
 
 (* [get_option_bindings scr] is the list of navigation menus at the top of the
    terminal given the current screen [scr]*)
@@ -65,6 +98,8 @@ let get_option_bindings scr =
   match scr with
   | Main -> [ Display; Buy Ticker; Sell Ticker; Quit ]
   | Display -> [ Main ]
+  | DisplayPaginate i ->
+      [ DisplayPaginate (i - 1); DisplayPaginate (i + 1); Main ]
   | Buy s -> (
       match s with
       | Ticker -> [ Buy Quantity; Main ]
@@ -78,6 +113,10 @@ let get_option_bindings scr =
   | Error _ -> [ Main ]
   | Quit -> []
 
+(* let display_portfolio st = let to_display = st.portfolio |>
+   P.display_portfolio in let lines = st.height - 10 in if lines >= List.length
+   to_display then display_list to_display (st.height - 10) else I.empty *)
+
 (* [render_image st] is a Notty image to display constructed from state [st]*)
 let render_image st =
   let create_option s u =
@@ -90,7 +129,7 @@ let render_image st =
     | h :: t -> I.(string A.(fg white) h <-> display_list t)
   in
   I.(
-    title
+    title st
     <->
     match st.screen with
     | Main ->
@@ -104,7 +143,27 @@ let render_image st =
     | Display ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
-        <-> (st.portfolio |> P.display_portfolio |> display_list)
+        <-> display_list (P.display_portfolio st.portfolio)
+    | DisplayPaginate i ->
+        let lines = st.height - 12 in
+        let pages = (List.length st.portfolio_display / lines) + 1 in
+        let paginated_display =
+          sublist st.portfolio_display
+            ((i - 1) * lines)
+            (((i - 1) * lines) + lines)
+        in
+        create_option "Back" (st.selected = 0)
+        <|> void 2 0
+        <|> create_option "Next" (st.selected = 1)
+        <|> void 2 0
+        <|> create_option "Main menu" (st.selected = 2)
+        <-> void 0 1
+        <-> display_list paginated_display
+        <-> void 0 1
+        <-> string
+              A.(fg white)
+              ("<Page " ^ (i |> string_of_int) ^ "/" ^ (pages |> string_of_int)
+             ^ ">")
     | Buy Ticker | Sell Ticker ->
         create_option "Select ticker" (st.selected = 0)
         <|> void 2 0
@@ -124,12 +183,14 @@ let render_image st =
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been bought."
-        <-> (st.portfolio |> P.display_portfolio |> display_list)
+        (* <-> display_list (st.portfolio |> P.display_portfolio) (st.height -
+           11) *)
     | Sell Success ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
         <-> string A.(fg white) "Congratulations, stock has been sold."
-        <-> (st.portfolio |> P.display_portfolio |> display_list)
+        (* <-> display_list (st.portfolio |> P.display_portfolio) (st.height -
+           11) *)
     | Error e ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
@@ -180,11 +241,13 @@ let enter_clicked st =
         else st.portfolio
       in
       {
+        st with
         screen =
           (if st.portfolio = updated_portfolio then Error !error
            else Buy Success);
         selected = 0;
         portfolio = updated_portfolio;
+        portfolio_display = P.display_portfolio updated_portfolio;
         ticker = "";
         quantity = "";
       }
@@ -223,13 +286,28 @@ let enter_clicked st =
         else st.portfolio
       in
       {
+        st with
         screen =
           (if st.portfolio = updated_portfolio then Error !error
            else Sell Success);
         selected = 0;
         portfolio = updated_portfolio;
+        portfolio_display = P.display_portfolio updated_portfolio;
         ticker = "";
         quantity = "";
+      }
+  | Display ->
+      if st.portfolio |> P.display_portfolio |> List.length <= st.height - 10
+      then { st with screen = Display; selected = 0 }
+      else { st with screen = DisplayPaginate 1; selected = 0 }
+  | DisplayPaginate i ->
+      let pages = (List.length st.portfolio_display / (st.height - 11)) + 1 in
+      {
+        st with
+        screen =
+          (if i < 1 then DisplayPaginate 1
+           else if i > pages then DisplayPaginate pages
+           else DisplayPaginate i);
       }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
@@ -260,6 +338,7 @@ let character_clicked st c =
 let rec main_loop (t : Term.t) (st : state) =
   Term.image t (render_image st);
   match Term.event t with
+  | `Resize (width, height) -> main_loop t { st with width; height }
   | `End | `Key (`Escape, []) ->
       F.update_file "data_dir/data.txt" st.portfolio |> ignore
   | `Key (`Arrow `Left, []) | `Key (`Arrow `Up, []) ->
@@ -277,7 +356,8 @@ let rec main_loop (t : Term.t) (st : state) =
 
 let () =
   let t = Term.create () in
-  main_loop t initial_state;
+  let size = Term.size t in
+  main_loop t { initial_state with height = size |> snd; width = size |> fst };
   Term.release t
 
 (* let () = Api.print_json_results "MSFT" () *)
