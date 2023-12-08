@@ -1,3 +1,19 @@
+(* Test Plan.*)
+
+(* 1. Parts of system automatically tested by OUnit. *)
+
+(*- [portfolio.ml]: All the functions in the [.mli], except for those that
+  return output containing information on dates/prices. These excluded functions
+  are [batches_data], [display_portfolio], [display_portfolio_filesys]. The
+  reason for these exclusions is the dates/prices depend on the current time the
+  user polls the API. so these data are not known ahead of time. *)
+
+(* [filesys.ml]: For all the functions in the [.mli], the simplest test cases
+   are provided. More complicated test cases were attempted, but they were
+   taking too long to run, a possible concern. However, throughout interactive
+   testing, the file-saving system did not hang unexpectedly (after additional
+   fixes were made on the UI end). *)
+
 open OUnit2
 open Stocks
 open Portfolio

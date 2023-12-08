@@ -88,6 +88,8 @@ module type PortfolioType = sig
  *)
 end
 
+(* TODO: possibly include [cost_basis]. *)
+
 module String_map : Map.S with type key = string
 (** A Map whose keys are strings. *)
 
