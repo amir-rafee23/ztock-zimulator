@@ -15,10 +15,15 @@ type step =
   | Quantity
   | Success
 
+type view_step =
+  | Ticker
+  | Success
+
 type screen =
   | Main
   | Display
   | DisplayPaginate of int
+  | View of view_step
   | Buy of step
   | Sell of step
   | Error of string
@@ -27,6 +32,8 @@ type screen =
 type dir =
   | Left
   | Right
+
+type stock_data = { price : float }
 
 type state = {
   screen : screen;
@@ -37,10 +44,11 @@ type state = {
   quantity : string;
   height : int;
   width : int;
+  data : stock_data;
 }
 
-(* [sublist l i j] is a sub-list of list [l] from index [i] (inclusive) to index
-   [j] (exclusive)*)
+(** [sublist l i j] is a sub-list of list [l] from index [i] (inclusive) to
+    index [j] (exclusive)*)
 let sublist l i j =
   let rec take l n =
     if n = 0 then []
@@ -73,13 +81,14 @@ let initial_state : state =
     quantity = "";
     height = 0;
     width = 0;
+    data = { price = 0. };
   }
 
 let title st =
   I.(
     void 0 3
-    <-> (void ((st.width / 2) - 9) 0
-        <|> string A.(fg blue) "ZAZ STOCK SIMULATOR")
+    <-> (void ((st.width / 2) - 10) 0
+        <|> string A.(fg blue) "Zazzy Ztock Zimulator")
     </>
     let line =
       char A.(fg black ++ bg blue) '|' 1 1
@@ -92,14 +101,18 @@ let title st =
         <|> char A.(fg black ++ bg blue) '|' 1 5)
     <-> line <-> void 0 1)
 
-(* [get_option_bindings scr] is the list of navigation menus at the top of the
-   terminal given the current screen [scr]*)
+(** [get_option_bindings scr] is the list of navigation menus at the top of the
+    terminal given the current screen [scr]*)
 let get_option_bindings scr =
   match scr with
-  | Main -> [ Display; Buy Ticker; Sell Ticker; Quit ]
+  | Main -> [ Display; View Ticker; Buy Ticker; Sell Ticker; Quit ]
   | Display -> [ Main ]
   | DisplayPaginate i ->
       [ DisplayPaginate (i - 1); DisplayPaginate (i + 1); Main ]
+  | View s -> (
+      match s with
+      | Ticker -> [ View Success; Main ]
+      | Success -> [ Buy Quantity; View Ticker; Main ])
   | Buy s -> (
       match s with
       | Ticker -> [ Buy Quantity; Main ]
@@ -117,7 +130,7 @@ let get_option_bindings scr =
    P.display_portfolio in let lines = st.height - 10 in if lines >= List.length
    to_display then display_list to_display (st.height - 10) else I.empty *)
 
-(* [render_image st] is a Notty image to display constructed from state [st]*)
+(** [render_image st] is a Notty image to display constructed from state [st]*)
 let render_image st =
   let create_option s u =
     I.(
@@ -135,11 +148,13 @@ let render_image st =
     | Main ->
         create_option "Display portfolio" (st.selected = 0)
         <|> void 2 0
-        <|> create_option "Buy stock" (st.selected = 1)
+        <|> create_option "View stock" (st.selected = 1)
         <|> void 2 0
-        <|> create_option "Sell stock" (st.selected = 2)
+        <|> create_option "Buy stock" (st.selected = 2)
         <|> void 2 0
-        <|> create_option "Quit" (st.selected = 3)
+        <|> create_option "Sell stock" (st.selected = 3)
+        <|> void 2 0
+        <|> create_option "Quit" (st.selected = 4)
     | Display ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
@@ -164,6 +179,13 @@ let render_image st =
               A.(fg white)
               ("<Page " ^ (i |> string_of_int) ^ "/" ^ (pages |> string_of_int)
              ^ ">")
+    | View Ticker ->
+        create_option "View stock" (st.selected = 0)
+        <|> void 2 0
+        <|> create_option "Main menu" (st.selected = 1)
+        <-> void 0 1
+        <-> string A.(fg white) "Enter the ticker:"
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
     | Buy Ticker | Sell Ticker ->
         create_option "Select ticker" (st.selected = 0)
         <|> void 2 0
@@ -191,6 +213,15 @@ let render_image st =
         <-> string A.(fg white) "Congratulations, stock has been sold."
         (* <-> display_list (st.portfolio |> P.display_portfolio) (st.height -
            11) *)
+    | View Success ->
+        create_option "Buy stock" (st.selected = 0)
+        <|> void 2 0
+        <|> create_option "Select another ticker" (st.selected = 1)
+        <|> void 2 0
+        <|> create_option "Main menu" (st.selected = 2)
+        <-> void 0 1
+        <-> string A.(fg white) ("Ticker: " ^ st.ticker)
+        <-> string A.(fg white) ("Price: $" ^ string_of_float st.data.price)
     | Error e ->
         create_option "Main menu" (st.selected = 0)
         <-> void 0 1
@@ -198,8 +229,8 @@ let render_image st =
         <-> string A.(fg white) e
     | Quit -> empty)
 
-(* [arrow_clicked st dir] is the updated state with a new selected menu option
-   given direction [dir] *)
+(** [arrow_clicked st dir] is the updated state with a new selected menu option
+    given direction [dir] *)
 let arrow_clicked st dir =
   let max = (st.screen |> get_option_bindings |> List.length) - 1 in
   let sel =
@@ -209,7 +240,7 @@ let arrow_clicked st dir =
   in
   { st with selected = sel }
 
-(* [enter_clicked st] is the updated state after enter button is clicked *)
+(** [enter_clicked st] is the updated state after enter button is clicked *)
 let enter_clicked st =
   match List.nth (get_option_bindings st.screen) st.selected with
   | Buy Success ->
@@ -309,13 +340,23 @@ let enter_clicked st =
            else if i > pages then DisplayPaginate pages
            else DisplayPaginate i);
       }
+  | Main -> { st with screen = Main; selected = 0; ticker = "" }
+  | View Ticker -> { st with screen = View Ticker; selected = 0; ticker = "" }
+  | View Success ->
+      {
+        st with
+        screen = View Success;
+        selected = 0;
+        data = { price = Api.get_price st.ticker };
+      }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
-(* [character_clicked st c] is the updated state after character [c] is
-   clicked *)
+(** [character_clicked st c] is the updated state after character [c] is clicked *)
 let character_clicked st c =
   match st with
-  | { screen = Buy Ticker; ticker } | { screen = Sell Ticker; ticker } ->
+  | { screen = Buy Ticker; ticker }
+  | { screen = Sell Ticker; ticker }
+  | { screen = View Ticker; ticker } ->
       {
         st with
         ticker =
@@ -332,9 +373,9 @@ let character_clicked st c =
       }
   | _ -> st
 
-(* [main_loop t st] is the main loop of the application. Given the terminal IO
-   abstraction [t] and initial state [st], waits for and then processes an
-   interactive event *)
+(** [main_loop t st] is the main loop of the application. Given the terminal IO
+    abstraction [t] and initial state [st], waits for and then processes an
+    interactive event *)
 let rec main_loop (t : Term.t) (st : state) =
   Term.image t (render_image st);
   match Term.event t with
