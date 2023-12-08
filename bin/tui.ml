@@ -360,7 +360,8 @@ let character_clicked st c =
       {
         st with
         ticker =
-          (if c = "back" then String.sub ticker 0 (String.length ticker - 1)
+          (if c = "back" && String.length ticker >= 0 then
+             String.sub ticker 0 (String.length ticker - 1)
            else ticker ^ c);
       }
   | { screen = Buy Quantity; quantity } | { screen = Sell Quantity; quantity }
@@ -368,7 +369,8 @@ let character_clicked st c =
       {
         st with
         quantity =
-          (if c = "back" then String.sub quantity 0 (String.length quantity - 1)
+          (if c = "back" && String.length quantity >= 0 then
+             String.sub quantity 0 (String.length quantity - 1)
            else quantity ^ c);
       }
   | _ -> st

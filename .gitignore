@@ -16,4 +16,4 @@ _build
 *.zip
 
 # data files
-data_dir/
+data.txt
