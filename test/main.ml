@@ -4,15 +4,33 @@
 
 (*- [portfolio.ml]: All the functions in the [.mli], except for those that
   return output containing information on dates/prices. These excluded functions
-  are [batches_data], [display_portfolio], [display_portfolio_filesys]. The
-  reason for these exclusions is the dates/prices depend on the current time the
-  user polls the API. so these data are not known ahead of time. *)
+  are [display_portfolio], [display_portfolio_filesys]. The reason for these
+  exclusions is the dates/prices depend on the current time the user polls the
+  API. so these data are not known ahead of time. Black-box testing utilized
+  throughout. *)
 
 (* [filesys.ml]: For all the functions in the [.mli], the simplest test cases
    are provided. More complicated test cases were attempted, but they were
    taking too long to run, a possible concern. However, throughout interactive
    testing, the file-saving system did not hang unexpectedly (after additional
-   fixes were made on the UI end). *)
+   fixes were made on the UI end). These simplest test cases utilized black-box
+   testing. *)
+
+(* 2. Parts of the system manually tested. *)
+
+(* - [portfolio.ml]: [display_portfolio], [display_portfolio_filesys]. These
+   were tested relatively extensively interactively, via utop and with the
+   UI. *)
+(* - [filesys.ml]: All the functions in the [.mli] file, and therefore their
+   helpers, were tested interactively via utop continuously throughout
+   development. *)
+
+(*3. Why testing demonstrates the correctness of the system. *)
+
+(* - Testing was done continuously throughout development, including interactive
+   testing. *)
+(* - The backend was tested independently of the front end, as well as
+   together. *)
 
 open OUnit2
 open Stocks
