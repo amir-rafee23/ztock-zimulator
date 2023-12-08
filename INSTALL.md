@@ -1,7 +1,7 @@
 # Libraries to install
 - `opam install cohttp-lwt-unix`
 - `opam install tls-lwt`
-- `opam install bogue`
+- `opam install notty`
 
 If the above doesn't work, then run:
 
@@ -11,5 +11,5 @@ If the above doesn't work, then run:
 - `opam install lwt_ssl`
 
 # Run application
-- `dune build`
-- `dune exec gui`
+- `make build`
+- `make run`
