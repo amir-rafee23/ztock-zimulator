@@ -63,6 +63,10 @@ module type PortfolioType = sig
 
       Requires: first argument is either "buy"/"sell". *)
 
+  val cost_basis : t -> string -> float option
+  (** [cost_basis portfolio stock] is the cost-basis of stock [stock] in
+      portfolio [portfolio]*)
+
   (* TODO: Also display current portfolio's value. Need a function for that.*)
   val display_portfolio : t -> string list
   (** Returns a "pretty-printer" string to display the portfolio. For each stock

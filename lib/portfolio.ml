@@ -19,6 +19,7 @@ module type PortfolioType = sig
   val add_stock : t -> string -> int -> t
   val remove_stock : t -> string -> int -> t
   val batches_data : t -> string -> string -> (float * int * float) list
+  val cost_basis : t -> string -> float option
   val display_portfolio : t -> string list
   val display_portfolio_filesys : t -> string list list
 end
@@ -216,6 +217,21 @@ module UserPortfolio : UserPortfolioType = struct
       get_batches_data (String_map.find stock portfolio).buy_batches
     else get_batches_data (String_map.find stock portfolio).sell_batches
 
+  let cost_basis (portfolio : t) (stock : string) : float option =
+    match String_map.find_opt stock portfolio with
+    | Some stock_data -> (
+        let calculate_cost acc batch =
+          acc +. (batch.price *. float_of_int batch.quantity)
+        in
+        let buy_batches_cost =
+          List.fold_left calculate_cost 0. stock_data.buy_batches
+        in
+        let q = float_of_int stock_data.quantity in
+        match q with
+        | 0. -> None
+        | _ -> Some (buy_batches_cost /. float_of_int stock_data.quantity))
+    | None -> None
+
   let rec display_portfolio (portfolio : t) : string list =
     (* Stocks held in [portfolio]. *)
     let stocks = String_map.bindings portfolio in
@@ -257,6 +273,9 @@ module UserPortfolio : UserPortfolioType = struct
               sprintf "Initial buy date: %s" str_date_time;
               sprintf "Current total holding value: $%F%!"
                 (current_price *. float_of_int data.quantity);
+              (match cost_basis portfolio stock with
+              | Some f -> sprintf "Cost-basis: $%F%!" f
+              | None -> "No cost-basis available");
             ]
         in
         (* Handle possibly printing more stocks. *)
