@@ -219,18 +219,25 @@ module UserPortfolio : UserPortfolioType = struct
 
   let cost_basis (portfolio : t) (stock : string) : float option =
     match String_map.find_opt stock portfolio with
-    | Some stock_data -> (
-        let calculate_cost acc batch =
-          acc +. (batch.price *. float_of_int batch.quantity)
-        in
-        let buy_batches_cost =
-          List.fold_left calculate_cost 0. stock_data.buy_batches
-        in
-        let q = float_of_int stock_data.quantity in
-        match q with
-        | 0. -> None
-        | _ -> Some (buy_batches_cost /. float_of_int stock_data.quantity))
-    | None -> None
+      | Some stock_data -> (
+          let calculate_cost acc batch =
+            acc +. (batch.price *. float_of_int batch.quantity)
+          in
+          let buy_batches_cost : float =
+            List.fold_left calculate_cost 0. stock_data.buy_batches
+          in
+          let purchased acc (batch : batches_element_data): int =
+            acc + batch.quantity
+          in
+          let total_purchased_quantity : int =
+            List.fold_left purchased 0 stock_data.buy_batches
+          in
+          match total_purchased_quantity with
+            | 0 -> None
+            | _ -> Some (buy_batches_cost /. 
+                          float_of_int total_purchased_quantity)
+        )
+      | None -> None
 
   let rec display_portfolio (portfolio : t) : string list =
     (* Stocks held in [portfolio]. *)
