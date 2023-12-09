@@ -13,7 +13,7 @@ module P = Portfolio.UserPortfolio
 (* - Uppercase ticker - Reset ability - Add cash - Add tui.mli - Fix display
    issue *)
 
-type step =
+type transaction_step =
   | Ticker
   | Quantity
   | Success
@@ -27,8 +27,8 @@ type screen =
   | Display
   | DisplayPaginate of int
   | View of view_step
-  | Buy of step
-  | Sell of step
+  | Buy of transaction_step
+  | Sell of transaction_step
   | Error of string
   | Reset of bool
   | Quit
@@ -38,6 +38,9 @@ type dir =
   | Right
 
 type stock_data = { price : float }
+
+let starting_cash = 10000.
+let non_display_lines = 9
 
 type state = {
   screen : screen;
@@ -49,6 +52,7 @@ type state = {
   height : int;
   width : int;
   data : stock_data;
+  cash : float;
 }
 
 (** [sublist l i j] is a sub-list of list [l] from index [i] (inclusive) to
@@ -70,22 +74,36 @@ let sublist l i j =
   in
   take (drop l i) (j - i)
 
+let calculate_cash (p : P.t) : float =
+  let add_values (b : float) (d : P.batches_element_data) =
+    b +. (d.price *. float_of_int d.quantity)
+  in
+  Portfolio.String_map.fold
+    (fun _ (data : P.stock_data) (current_cash : float) ->
+      current_cash
+      -. List.fold_left add_values 0. data.buy_batches
+      +. List.fold_left add_values 0. data.sell_batches)
+    p starting_cash
+
 let load_or_empty_data () =
   try F.to_user_portfolio "data_dir/data.txt"
   with Sys_error _ -> P.empty_portfolio
 
 let initial_state : state =
-  let p = load_or_empty_data () in
+  let port = load_or_empty_data () in
+  let cash = calculate_cash port in
   {
     screen = Main;
     selected = 0;
-    portfolio = p;
-    portfolio_display = P.display_portfolio p;
+    portfolio = port;
+    portfolio_display =
+      ("Cash: $" ^ string_of_float cash) :: P.display_portfolio port;
     ticker = "";
     quantity = "";
     height = 0;
     width = 0;
     data = { price = 0. };
+    cash;
   }
 
 let title st =
@@ -163,9 +181,9 @@ let render_image st =
         title st
         <-> (create_option "Main menu" (st.selected = 0)
             <-> void 0 1
-            <-> display_list (P.display_portfolio st.portfolio))
+            <-> display_list st.portfolio_display)
     | DisplayPaginate i ->
-        let lines = st.height - 11 in
+        let lines = st.height - (non_display_lines + 2) in
         let pages = (List.length st.portfolio_display / lines) + 1 in
         let paginated_display =
           sublist st.portfolio_display
@@ -296,17 +314,31 @@ let enter_clicked st =
               st.portfolio)
         else st.portfolio
       in
-      {
-        st with
-        screen =
-          (if st.portfolio = updated_portfolio then Error !error
-           else Buy Success);
-        selected = 0;
-        portfolio = updated_portfolio;
-        portfolio_display = P.display_portfolio updated_portfolio;
-        ticker = "";
-        quantity = "";
-      }
+      let cash = calculate_cash updated_portfolio in
+
+      if cash >= 0. then
+        {
+          st with
+          screen =
+            (if st.portfolio = updated_portfolio then Error !error
+             else Buy Success);
+          selected = 0;
+          portfolio = updated_portfolio;
+          portfolio_display =
+            ("Cash: $" ^ string_of_float cash)
+            :: P.display_portfolio updated_portfolio;
+          cash;
+          ticker = "";
+          quantity = "";
+        }
+      else
+        {
+          st with
+          screen = Error "You do not have enough cash!";
+          selected = 0;
+          ticker = "";
+          quantity = "";
+        }
   | Sell Success ->
       let error = ref "" in
       let int_quantity =
@@ -341,6 +373,7 @@ let enter_clicked st =
               st.portfolio)
         else st.portfolio
       in
+      let cash = calculate_cash updated_portfolio in
       {
         st with
         screen =
@@ -348,16 +381,23 @@ let enter_clicked st =
            else Sell Success);
         selected = 0;
         portfolio = updated_portfolio;
-        portfolio_display = P.display_portfolio updated_portfolio;
+        portfolio_display =
+          ("Cash: $" ^ string_of_float cash)
+          :: P.display_portfolio updated_portfolio;
+        cash;
         ticker = "";
         quantity = "";
       }
   | Display ->
-      if st.portfolio |> P.display_portfolio |> List.length <= st.height - 9
+      if st.portfolio_display |> List.length <= st.height - non_display_lines
       then { st with screen = Display; selected = 0 }
       else { st with screen = DisplayPaginate 1; selected = 0 }
   | DisplayPaginate i ->
-      let pages = (List.length st.portfolio_display / (st.height - 10)) + 1 in
+      let pages =
+        List.length st.portfolio_display
+        / (st.height - (non_display_lines + 1))
+        + 1
+      in
       {
         st with
         screen =
@@ -374,7 +414,16 @@ let enter_clicked st =
       else { st with screen = View Success; selected = 0; data = { price } }
   | Reset true ->
       F.update_file "data_dir/data.txt" P.empty_portfolio |> ignore;
-      { st with screen = Reset true; selected = 0 }
+      {
+        st with
+        screen = Reset true;
+        selected = 0;
+        portfolio = P.empty_portfolio;
+        portfolio_display =
+          ("Cash: $" ^ string_of_float starting_cash)
+          :: P.display_portfolio P.empty_portfolio;
+        cash = starting_cash;
+      }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
 (** [character_clicked st c] is the updated state after character [c] is clicked *)
