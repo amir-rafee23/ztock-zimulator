@@ -1,17 +1,10 @@
-(*I.(<|>) : puts one image after another I.(<->) : puts one image below another
-  I.(</>) : puts one image on another.*)
-
 open Notty
 open Notty_unix
-open Stocks
 open Uchar
 open Api
 open Exception
 module F = Filesys.FileSys
 module P = Portfolio.UserPortfolio
-
-(* - Uppercase ticker - Reset ability - Add cash - Add tui.mli - Fix display
-   issue *)
 
 type transaction_step =
   | Ticker
@@ -39,9 +32,6 @@ type dir =
 
 type stock_data = { price : float }
 
-let starting_cash = 10000.
-let non_display_lines = 9
-
 type state = {
   screen : screen;
   selected : int;
@@ -55,8 +45,9 @@ type state = {
   cash : float;
 }
 
-(** [sublist l i j] is a sub-list of list [l] from index [i] (inclusive) to
-    index [j] (exclusive)*)
+let starting_cash = 10000.
+let non_display_lines = 9
+
 let sublist l i j =
   let rec take l n =
     if n = 0 then []
@@ -74,8 +65,8 @@ let sublist l i j =
   in
   take (drop l i) (j - i)
 
-let calculate_cash (p : P.t) : float =
-  let add_values (b : float) (d : P.batches_element_data) =
+let calculate_cash p =
+  let add_values b (d : P.batches_element_data) =
     b +. (d.price *. float_of_int d.quantity)
   in
   Portfolio.String_map.fold
@@ -89,7 +80,7 @@ let load_or_empty_data () =
   try F.to_user_portfolio "data_dir/data.txt"
   with Sys_error _ -> P.empty_portfolio
 
-let initial_state : state =
+let initial_state =
   let port = load_or_empty_data () in
   let cash = calculate_cash port in
   {
@@ -125,8 +116,6 @@ let title st =
         <|> char A.(fg black ++ bg blue) '|' 1 4)
     <-> line <-> void 0 1)
 
-(** [get_option_bindings scr] is the list of navigation menus at the top of the
-    terminal given the current screen [scr]*)
 let get_option_bindings scr =
   match scr with
   | Main -> [ Display; View Ticker; Buy Ticker; Sell Ticker; Reset false; Quit ]
@@ -151,7 +140,6 @@ let get_option_bindings scr =
   | Reset b -> if b then [ Main ] else [ Main; Reset true ]
   | Quit -> []
 
-(** [render_image st] is a Notty image to display constructed from state [st]*)
 let render_image st =
   let create_option s u =
     I.(
@@ -272,8 +260,6 @@ let render_image st =
             <-> string A.(fg green) "Portfolio has been fully reset!")
     | Quit -> empty)
 
-(** [arrow_clicked st dir] is the updated state with a new selected menu option
-    given direction [dir] *)
 let arrow_clicked st dir =
   let max = (st.screen |> get_option_bindings |> List.length) - 1 in
   let sel =
@@ -283,7 +269,6 @@ let arrow_clicked st dir =
   in
   { st with selected = sel }
 
-(** [enter_clicked st] is the updated state after enter button is clicked *)
 let enter_clicked st =
   match List.nth (get_option_bindings st.screen) st.selected with
   | Buy Success ->
@@ -426,7 +411,6 @@ let enter_clicked st =
       }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
-(** [character_clicked st c] is the updated state after character [c] is clicked *)
 let character_clicked st c =
   match st with
   | { screen = Buy Ticker; ticker }
@@ -450,10 +434,7 @@ let character_clicked st c =
       }
   | _ -> st
 
-(** [main_loop t st] is the main loop of the application. Given the terminal IO
-    abstraction [t] and initial state [st], waits for and then processes an
-    interactive event *)
-let rec main_loop (t : Term.t) (st : state) =
+let rec main_loop t st =
   Term.image t (render_image st);
   match Term.event t with
   | `Resize (width, height) -> main_loop t { st with width; height }
@@ -471,11 +452,3 @@ let rec main_loop (t : Term.t) (st : state) =
   | `Key (`ASCII c, []) -> main_loop t (character_clicked st (Char.escaped c))
   | `Key (`Backspace, []) -> main_loop t (character_clicked st "back")
   | _ -> main_loop t st
-
-let () =
-  let t = Term.create () in
-  let size = Term.size t in
-  main_loop t { initial_state with height = size |> snd; width = size |> fst };
-  Term.release t
-
-(* let () = Api.print_json_results "MSFT" () *)

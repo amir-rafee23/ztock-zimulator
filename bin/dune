@@ -1,4 +1,4 @@
 (executable
- (name tui)
- (public_name tui)
- (libraries stocks notty notty.unix))
+ (name main)
+ (public_name main)
+ (libraries stocks notty.unix))
