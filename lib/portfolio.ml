@@ -15,7 +15,6 @@ module type PortfolioType = sig
   val empty_portfolio : t
   val contains_stock : t -> string -> bool
   val quantity_stock : t -> string -> int
-  val stock_price_over_time : t -> string -> int list
   val add_stock : t -> string -> int -> t
   val remove_stock : t -> string -> int -> t
   val batches_data : t -> string -> string -> (float * int * float) list
@@ -86,10 +85,6 @@ module UserPortfolio : UserPortfolioType = struct
     | None -> 0
     (* [stock] in portfolio. *)
     | Some x -> x.quantity
-
-  (* TODO: possibly remove. *)
-  let stock_price_over_time (portfolio : t) (stock : string) : int list =
-    failwith "unimplemented"
 
   let add_stock (portfolio : t) (stock : string) (qty : int) : t =
     (* Precondition. *)
@@ -251,22 +246,7 @@ module UserPortfolio : UserPortfolioType = struct
         (* Determine the string representation of the epoch initial buy date.
            month/day/year hour:min:sec is the output format. *)
         let local_time = Unix.localtime data.initial_buy_date in
-        let str_date_time =
-          (* TODO: Factor out common code (maybe use map). *)
-
-          (* tm_mon gives the month - 1*)
-          (local_time.tm_mon + 1 |> string_of_int)
-          ^ "/"
-          ^ (local_time.tm_mday |> string_of_int)
-          ^ "/"
-          (*tm_year gives the year - 1900*)
-          ^ (local_time.tm_year + 1900 |> string_of_int)
-          ^ " "
-          ^ (local_time.tm_hour |> string_of_int)
-          ^ ":"
-          ^ (local_time.tm_min |> string_of_int)
-          ^ ":"
-          ^ (local_time.tm_sec |> string_of_int)
+        let str_date_time = (Api.get_time local_time)
         in
 
         let current_price = Api.get_price stock in

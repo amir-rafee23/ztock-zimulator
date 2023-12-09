@@ -111,49 +111,10 @@ let get_yr_m_d t =
   let day = Printf.sprintf "%02d" t.tm_mday in
   year ^ "-" ^ month ^ "-" ^ day
 
-let get_time =
-  let get_hr_min =
-    let round_by_five n = (n + 2) / 5 * 5 in
-    let t = local_time in
-    let hr = Printf.sprintf "%02d" t.tm_hour in
-    let rounded_min =
-      if t.tm_min > 10 then round_by_five t.tm_min - 20
-      else round_by_five t.tm_min + 40
-    in
-    let min = Printf.sprintf "%02d" rounded_min in
-    hr ^ ":" ^ min
-  in
-  get_yr_m_d local_time ^ " " ^ get_hr_min
+let get_hr_min t =
+  let hr = Printf.sprintf "%02d" t.tm_hour in
+  let min = Printf.sprintf "%02d" t.tm_min in
+  hr ^ ":" ^ min
 
-let unix_time_of_string datetime_str =
-  let split_datetime datetime_str =
-    match String.split_on_char ' ' datetime_str with
-    | [ date; time ] ->
-        Some (String.split_on_char '-' date, String.split_on_char ':' time)
-    | _ -> None
-  in
-  match split_datetime datetime_str with
-  | Some (date_parts, time_parts) -> (
-      match (date_parts, time_parts) with
-      | [ year; month; day ], [ hour; minute ] ->
-          let tm =
-            {
-              tm_year = int_of_string year - 1900;
-              tm_mon = int_of_string month - 1;
-              tm_mday = int_of_string day;
-              tm_hour = int_of_string hour;
-              tm_min = int_of_string minute;
-              tm_sec = 0;
-              tm_wday = 0;
-              tm_yday = 0;
-              tm_isdst = false;
-            }
-          in
-          Some (Unix.mktime tm)
-      | _ -> None)
-  | None -> None
-
-let unix_time datetime_str =
-  match unix_time_of_string datetime_str with
-  | Some (f, _) -> f
-  | None -> failwith "Incorrect date time entered"
+let get_time (t: Unix.tm) =
+  (get_yr_m_d t) ^ " " ^ (get_hr_min t)

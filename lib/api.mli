@@ -26,12 +26,11 @@ val get_price : string -> float
 val local_time : Unix.tm
 (** the current local time*)
 
-val get_time : string
+val get_yr_m_d : Unix.tm -> string
+(** formats time as "YYYY-MM-DD"*)
+
+val get_hr_min : Unix.tm -> string
+(** formats time as "HH-mm"*)
+
+val get_time : Unix.tm -> string
 (** formats time as "YYYY-MM-DD HH-mm"*)
-
-val unix_time_of_string : string -> (float * Unix.tm) option
-(** returns option [float * Unix.tm of some string is json date formatting]*)
-
-val unix_time : string -> float
-(** returns some date time formatting as just a float unix time YYYY-MM-DD HH-mm
-    -> a float *)

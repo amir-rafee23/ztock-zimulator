@@ -14,9 +14,6 @@ module type PortfolioType = sig
   val quantity_stock : t -> string -> int
   (** Returns the quantity of a stock held in the portfolio. *)
 
-  (* TODO: Could make this function more general, and just have it display the
-     price of some stock from a certain start date to the present date. *)
-  val stock_price_over_time : t -> string -> int list
   (** Returns the prices of a stock over time, specifically, from the most
       recent time when the stock went from being absent to present in the
       portfolio, to when this function is called. Returns the empty list if and
