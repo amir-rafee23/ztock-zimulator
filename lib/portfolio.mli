@@ -83,10 +83,9 @@ module type PortfolioType = sig
     [
         ["ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches"];
         
-        ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}; ... ;{pb_m, qb_m, db_m}]"; 
+        ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}"; ... ;"{pb_m, qb_m, db_m}]"; 
         "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
-    ] 
- *)
+    ]*)
 end
 
 module String_map : Map.S with type key = string
