@@ -10,6 +10,9 @@ open Exception
 module F = Filesys.FileSys
 module P = Portfolio.UserPortfolio
 
+(* - Uppercase ticker - Reset ability - Add cash - Add tui.mli - Fix display
+   issue *)
+
 type step =
   | Ticker
   | Quantity
@@ -27,6 +30,7 @@ type screen =
   | Buy of step
   | Sell of step
   | Error of string
+  | Reset of bool
   | Quit
 
 type dir =
@@ -86,9 +90,11 @@ let initial_state : state =
 
 let title st =
   I.(
-    void 0 3
+    void 0 2
     <-> (void ((st.width / 2) - 10) 0
-        <|> string A.(fg blue) "Zazzy Ztock Zimulator")
+        <|> string A.(fg blue) "Zazzy Ztock Zimulator"
+        <-> (void ((st.width / 2) - 18) 0
+            <|> string A.(fg white) "Arrows to navigate | Enter to select"))
     </>
     let line =
       char A.(fg black ++ bg blue) '|' 1 1
@@ -96,16 +102,16 @@ let title st =
       <|> char A.(fg black ++ bg blue) '|' 1 1
     in
     line
-    <-> (char A.(fg black ++ bg blue) '|' 1 5
+    <-> (char A.(fg black ++ bg blue) '|' 1 4
         <|> void (st.width - 2) 0
-        <|> char A.(fg black ++ bg blue) '|' 1 5)
+        <|> char A.(fg black ++ bg blue) '|' 1 4)
     <-> line <-> void 0 1)
 
 (** [get_option_bindings scr] is the list of navigation menus at the top of the
     terminal given the current screen [scr]*)
 let get_option_bindings scr =
   match scr with
-  | Main -> [ Display; View Ticker; Buy Ticker; Sell Ticker; Quit ]
+  | Main -> [ Display; View Ticker; Buy Ticker; Sell Ticker; Reset false; Quit ]
   | Display -> [ Main ]
   | DisplayPaginate i ->
       [ DisplayPaginate (i - 1); DisplayPaginate (i + 1); Main ]
@@ -124,11 +130,8 @@ let get_option_bindings scr =
       | Quantity -> [ Sell Success; Main ]
       | Success -> [ Main ])
   | Error _ -> [ Main ]
+  | Reset b -> if b then [ Main ] else [ Main; Reset true ]
   | Quit -> []
-
-(* let display_portfolio st = let to_display = st.portfolio |>
-   P.display_portfolio in let lines = st.height - 10 in if lines >= List.length
-   to_display then display_list to_display (st.height - 10) else I.empty *)
 
 (** [render_image st] is a Notty image to display constructed from state [st]*)
 let render_image st =
@@ -142,91 +145,113 @@ let render_image st =
     | h :: t -> I.(string A.(fg white) h <-> display_list t)
   in
   I.(
-    title st
-    <->
     match st.screen with
     | Main ->
-        create_option "Display portfolio" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "View stock" (st.selected = 1)
-        <|> void 2 0
-        <|> create_option "Buy stock" (st.selected = 2)
-        <|> void 2 0
-        <|> create_option "Sell stock" (st.selected = 3)
-        <|> void 2 0
-        <|> create_option "Quit" (st.selected = 4)
+        title st
+        <-> (create_option "Display portfolio" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "View stock" (st.selected = 1)
+            <|> void 2 0
+            <|> create_option "Buy stock" (st.selected = 2)
+            <|> void 2 0
+            <|> create_option "Sell stock" (st.selected = 3)
+            <|> void 2 0
+            <|> create_option "Reset portfolio" (st.selected = 4)
+            <|> void 2 0
+            <|> create_option "Quit" (st.selected = 5))
     | Display ->
-        create_option "Main menu" (st.selected = 0)
-        <-> void 0 1
-        <-> display_list (P.display_portfolio st.portfolio)
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <-> void 0 1
+            <-> display_list (P.display_portfolio st.portfolio))
     | DisplayPaginate i ->
-        let lines = st.height - 12 in
+        let lines = st.height - 11 in
         let pages = (List.length st.portfolio_display / lines) + 1 in
         let paginated_display =
           sublist st.portfolio_display
             ((i - 1) * lines)
             (((i - 1) * lines) + lines)
         in
-        create_option "Back" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "Next" (st.selected = 1)
-        <|> void 2 0
-        <|> create_option "Main menu" (st.selected = 2)
-        <-> void 0 1
-        <-> display_list paginated_display
-        <-> void 0 1
-        <-> string
-              A.(fg white)
-              ("<Page " ^ (i |> string_of_int) ^ "/" ^ (pages |> string_of_int)
-             ^ ">")
+        title st
+        <-> (create_option "Back" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Next" (st.selected = 1)
+            <|> void 2 0
+            <|> create_option "Main menu" (st.selected = 2)
+            <-> void 0 1
+            <-> display_list paginated_display
+            <-> void 0 1
+            <-> string
+                  A.(fg white)
+                  ("<Page " ^ (i |> string_of_int) ^ "/"
+                 ^ (pages |> string_of_int) ^ ">"))
     | View Ticker ->
-        create_option "View stock" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "Main menu" (st.selected = 1)
-        <-> void 0 1
-        <-> string A.(fg white) "Enter the ticker:"
-        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
+        title st
+        <-> (create_option "View stock" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Main menu" (st.selected = 1)
+            <-> void 0 1
+            <-> string A.(fg white) "Enter the ticker:"
+            <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
     | Buy Ticker | Sell Ticker ->
-        create_option "Select ticker" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "Main menu" (st.selected = 1)
-        <-> void 0 1
-        <-> string A.(fg white) "Enter the ticker:"
-        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
+        title st
+        <-> (create_option "Select ticker" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Main menu" (st.selected = 1)
+            <-> void 0 1
+            <-> string A.(fg white) "Enter the ticker:"
+            <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
     | Buy Quantity | Sell Quantity ->
-        create_option "Select quantity" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "Main menu" (st.selected = 1)
-        <-> void 0 1
-        <-> string A.(fg green) st.ticker
-        <-> string A.(fg white) "Enter the quantity:"
-        <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity)
+        title st
+        <-> (create_option "Select quantity" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Main menu" (st.selected = 1)
+            <-> void 0 1
+            <-> string A.(fg green) st.ticker
+            <-> string A.(fg white) "Enter the quantity:"
+            <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity))
     | Buy Success ->
-        create_option "Main menu" (st.selected = 0)
-        <-> void 0 1
-        <-> string A.(fg white) "Congratulations, stock has been bought."
-        (* <-> display_list (st.portfolio |> P.display_portfolio) (st.height -
-           11) *)
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <-> void 0 1
+            <-> string A.(fg white) "Congratulations, stock has been bought.")
     | Sell Success ->
-        create_option "Main menu" (st.selected = 0)
-        <-> void 0 1
-        <-> string A.(fg white) "Congratulations, stock has been sold."
-        (* <-> display_list (st.portfolio |> P.display_portfolio) (st.height -
-           11) *)
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <-> void 0 1
+            <-> string A.(fg white) "Congratulations, stock has been sold.")
     | View Success ->
-        create_option "Buy stock" (st.selected = 0)
-        <|> void 2 0
-        <|> create_option "Select another ticker" (st.selected = 1)
-        <|> void 2 0
-        <|> create_option "Main menu" (st.selected = 2)
-        <-> void 0 1
-        <-> string A.(fg white) ("Ticker: " ^ st.ticker)
-        <-> string A.(fg white) ("Price: $" ^ string_of_float st.data.price)
+        title st
+        <-> (create_option "Buy stock" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Select another ticker" (st.selected = 1)
+            <|> void 2 0
+            <|> create_option "Main menu" (st.selected = 2)
+            <-> (void 0 1
+                <-> string A.(fg white) ("Ticker: " ^ st.ticker)
+                <-> string
+                      A.(fg white)
+                      ("Price: $" ^ string_of_float st.data.price)))
     | Error e ->
-        create_option "Main menu" (st.selected = 0)
-        <-> void 0 1
-        <-> string A.(fg red) "ERROR"
-        <-> string A.(fg white) e
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <-> void 0 1
+            <-> string A.(fg red) "ERROR"
+            <-> string A.(fg white) e)
+    | Reset false ->
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <|> void 2 0
+            <|> create_option "Confirm Reset" (st.selected = 1)
+            <-> void 0 1
+            <-> string
+                  A.(fg red)
+                  "Are you sure you want to completely reset your portfolio?")
+    | Reset true ->
+        title st
+        <-> (create_option "Main menu" (st.selected = 0)
+            <-> void 0 1
+            <-> string A.(fg green) "Portfolio has been fully reset!")
     | Quit -> empty)
 
 (** [arrow_clicked st dir] is the updated state with a new selected menu option
@@ -328,11 +353,11 @@ let enter_clicked st =
         quantity = "";
       }
   | Display ->
-      if st.portfolio |> P.display_portfolio |> List.length <= st.height - 10
+      if st.portfolio |> P.display_portfolio |> List.length <= st.height - 9
       then { st with screen = Display; selected = 0 }
       else { st with screen = DisplayPaginate 1; selected = 0 }
   | DisplayPaginate i ->
-      let pages = (List.length st.portfolio_display / (st.height - 11)) + 1 in
+      let pages = (List.length st.portfolio_display / (st.height - 10)) + 1 in
       {
         st with
         screen =
@@ -343,12 +368,13 @@ let enter_clicked st =
   | Main -> { st with screen = Main; selected = 0; ticker = "" }
   | View Ticker -> { st with screen = View Ticker; selected = 0; ticker = "" }
   | View Success ->
-      {
-        st with
-        screen = View Success;
-        selected = 0;
-        data = { price = Api.get_price st.ticker };
-      }
+      let price = try Api.get_price st.ticker with NoResultsFound -> -1. in
+      if price = -1. then
+        { st with screen = Error (st.ticker ^ " was not found!"); selected = 0 }
+      else { st with screen = View Success; selected = 0; data = { price } }
+  | Reset true ->
+      F.update_file "data_dir/data.txt" P.empty_portfolio |> ignore;
+      { st with screen = Reset true; selected = 0 }
   | to_scr -> { st with screen = to_scr; selected = 0 }
 
 (** [character_clicked st c] is the updated state after character [c] is clicked *)
@@ -362,7 +388,7 @@ let character_clicked st c =
         ticker =
           (if c = "back" && String.length ticker >= 0 then
              String.sub ticker 0 (String.length ticker - 1)
-           else ticker ^ c);
+           else ticker ^ String.uppercase_ascii c);
       }
   | { screen = Buy Quantity; quantity } | { screen = Sell Quantity; quantity }
     ->
@@ -371,7 +397,7 @@ let character_clicked st c =
         quantity =
           (if c = "back" && String.length quantity >= 0 then
              String.sub quantity 0 (String.length quantity - 1)
-           else quantity ^ c);
+           else quantity ^ String.uppercase_ascii c);
       }
   | _ -> st
 
