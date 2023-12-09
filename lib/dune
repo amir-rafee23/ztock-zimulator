@@ -1,4 +1,4 @@
 (library
  (name stocks)
  (public_name Stocks)
- (libraries str unix lwt yojson cohttp cohttp-lwt-unix))
+ (libraries str unix lwt yojson cohttp cohttp-lwt-unix notty notty.unix))

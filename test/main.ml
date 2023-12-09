@@ -35,6 +35,7 @@
 open OUnit2
 open Stocks
 open Portfolio
+open Unix
 module Test_Portfolio = Portfolio.UserPortfolio
 open Filesys
 module Test_Filesys = FileSys
@@ -55,6 +56,10 @@ let add_stock_test_portfolio_2 =
 
 let add_stock_test_portfolio_3 =
   Test_Portfolio.add_stock add_stock_test_portfolio_2 "MSFT" 6
+
+let add_stock_test_portfolio_4 =
+  Test_Portfolio.add_stock (Test_Portfolio.add_stock (Test_Portfolio.add_stock add_stock_test_portfolio_3
+  "GOOG" 12) "AAPL" 3) "MSFT" 1
 
 (* TODO: More comprehensive tests. *)
 (* Also tests [quantity_stock] and [contains_stock]. *)
@@ -89,11 +94,24 @@ let add_stock_tests =
     >:: fun _ ->
       assert_equal 5
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "AAPL") );
+    ( " More complex sequence of adding -1"
+    >:: fun _ ->
+      assert_equal 12
+        (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "GOOG") );
+    ( " More complex sequence of adding -2"
+    >:: fun _ ->
+      assert_equal 8
+        (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "AAPL") );
+    ( " More complex sequence of adding -3"
+    >:: fun _ ->
+      assert_equal 11
+        (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "MSFT") );
   ]
 
 (* Portfolios used to test [remove_stock]. *)
 let remove_stock_test_portfolio1 =
-  Test_Portfolio.remove_stock Test_Portfolio.empty_portfolio "AAPL" 10
+  let p1 = Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "AAPL" 10 in
+  p1
 
 let remove_stock_test_portfolio2 =
   let p1 = Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 5 in
@@ -104,17 +122,39 @@ let remove_stock_test_portfolio3 =
   Test_Portfolio.remove_stock remove_stock_test_portfolio2 "MSFT" 3
 
 let remove_stock_test_portfolio4 =
-  Test_Portfolio.remove_stock remove_stock_test_portfolio2 "AAPL" 10
+  (Test_Portfolio.remove_stock (Test_Portfolio.add_stock 
+  Test_Portfolio.empty_portfolio "AAPL" 10) "AAPL" 7)
+
+let remove_stock_test_portfolio5 =
+  (Test_Portfolio.remove_stock 
+    (Test_Portfolio.remove_stock (Test_Portfolio.add_stock 
+  Test_Portfolio.empty_portfolio "AAPL" 10) "AAPL" 7) "AAPL" 2)
+
+let remove_stock_test_portfolio6 =
+  (Test_Portfolio.remove_stock
+    (Test_Portfolio.add_stock (Test_Portfolio.add_stock 
+    Test_Portfolio.empty_portfolio "AAPL" 10) "MSFT" 5) "AAPL" 2)
+
+let remove_stock_test_portfolio7 =
+  (Test_Portfolio.remove_stock (Test_Portfolio.remove_stock
+    (Test_Portfolio.add_stock (Test_Portfolio.remove_stock
+    (Test_Portfolio.add_stock (Test_Portfolio.add_stock 
+    Test_Portfolio.empty_portfolio "AAPL" 10) "MSFT" 5) "AAPL" 2) "GOOG" 12) 
+    "AAPL" 8) "MSFT" 4)
 
 let remove_stock_tests =
   [
-    ( "Removing a stock s from an empty portfolio - presence of s. " >:: fun _ ->
+    ( "Removing a stock s from an portfolio completely" >:: fun _ ->
       assert_equal false
-        (Test_Portfolio.contains_stock remove_stock_test_portfolio1 "AAPL") );
-    ( " Removing a stock s from an empty portfolio - quantity of s. "
-    >:: fun _ ->
-      assert_equal 0
-        (Test_Portfolio.quantity_stock remove_stock_test_portfolio1 "AAPL") );
+        (Test_Portfolio.contains_stock 
+        (Test_Portfolio.remove_stock remove_stock_test_portfolio1 "AAPL" 10)
+        "AAPL") );
+    ( " Removing a stock s from a portfolio non-completely ">:: fun _ ->
+      assert_equal 3
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio4 "AAPL") );
+    ( " Removing a stock s multiple times from portfolio non-completely ">:: 
+    fun _ -> assert_equal 1
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio5 "AAPL") );
     ( " Removing a stock s not completely from a non-empty portfolio - \
        presence of s"
     >:: fun _ ->
@@ -135,11 +175,23 @@ let remove_stock_tests =
     >:: fun _ ->
       assert_equal false
         (Test_Portfolio.contains_stock remove_stock_test_portfolio3 "MSFT") );
-    ( "Removing a stock s that is absent from a non-empty portfolio - presence \
-       of s. "
-    >:: fun _ ->
-      assert_equal false
-        (Test_Portfolio.contains_stock remove_stock_test_portfolio4 "AAPL") );
+    ( "Removing a share from a portfolio containing multiple tickers \
+    checking ticker quantity of stock not removed" >:: fun _ ->
+    assert_equal 5
+      (Test_Portfolio.quantity_stock remove_stock_test_portfolio6 "MSFT") );
+    ( "Removing a share from a portfolio containing multiple tickers \
+    checking ticker quantity of stock removed" >:: fun _ ->
+    assert_equal 8
+      (Test_Portfolio.quantity_stock remove_stock_test_portfolio6 "AAPL") );
+    ( "Test of add/remove sequence test" >:: fun _ ->
+    assert_equal 0
+      (Test_Portfolio.quantity_stock remove_stock_test_portfolio7 "AAPL") );
+    ( "Test of add/remove sequence test" >:: fun _ ->
+      assert_equal 1
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio7 "MSFT") );
+    ( "Test of add/remove sequence test" >:: fun _ ->
+      assert_equal 12
+        (Test_Portfolio.quantity_stock remove_stock_test_portfolio7 "GOOG") );
   ]
 
 (* Portfolios used to test [batches_data].*)
@@ -201,37 +253,6 @@ let batches_data_tests =
     );
   ]
 
-(* TODO: possibly remove, since unimplemented. *)
-
-(* Portfolios used to test [stock_price_over_time]. *)
-let stock_price_over_time_test_portfolio1 = Test_Portfolio.empty_portfolio
-
-let stock_price_over_time_test_portfolio2 =
-  Test_Portfolio.add_stock Test_Portfolio.empty_portfolio "MSFT" 10
-
-(* TODO: Run these tests in the suite.*)
-let stock_price_over_time_tests =
-  [
-    (* To test this function: 1. Create a portfolio of stocks. 2. Get the
-       initial buy date of one of the stocks to be tested (need a function for
-       this). 3. Split the present time and initial buy time into 10 intervals
-       (or whatever the number of intervals is) to get 10 times. 4. Ping API to
-       get prices at those 10 times, build a list of those prices. 5. Compare
-       function's output with 4.*)
-    ( " Stock not in empty portfolio" >:: fun _ ->
-      assert_equal []
-        (Test_Portfolio.stock_price_over_time
-           stock_price_over_time_test_portfolio1 "MSFT") );
-    ( " Stock not in non-empty portfolio" >:: fun _ ->
-      assert_equal []
-        (Test_Portfolio.stock_price_over_time
-           stock_price_over_time_test_portfolio2 "AAPL") );
-    (* (" Stock in non-empty portfolio, long duration between present time and
-       initial buy date. 10 data points.") (" Stock in non-empty portfolio,
-       short duration between present time and initial buy date. 10 data
-       points.") *)
-  ]
-
 (* File and portfolios used in testing [Filesys.update_file],
    [Filesys.to_user_portfolio]. *)
 let file = "data_dir/data.txt"
@@ -268,6 +289,50 @@ let filesys_tests =
        ); *)
   ]
 
+  let api_tests =
+    [
+      (*
+      Testing for determinable functions
+      *)
+
+      ("get_yr_m_d test1" >:: fun _ ->
+        assert_equal "1970-01-01"
+        (Api.get_yr_m_d (Unix.localtime 40600.))
+      );
+      
+      ("get_yr_m_d test2" >:: fun _ ->
+        assert_equal "2023-12-09"
+        (Api.get_yr_m_d (Unix.localtime 1702108888.))
+      );
+
+      ("get_hr_min test1" >:: fun _ ->
+        assert_equal "06:07"
+        (Api.get_hr_min (Unix.localtime 40060.))
+      );
+      
+      ("get_hr_min test2" >:: fun _ ->
+        assert_equal "03:09"
+        (Api.get_hr_min (Unix.localtime 1702109368.))
+      );
+
+      ("get_time test1" >:: fun _ ->
+        assert_equal "1970-01-01 06:06"
+        (Api.get_time (Unix.localtime 40000.))
+      );
+
+      ("get_time test2" >:: fun _ ->
+        assert_equal "2023-12-09 01:06"
+        (Api.get_time (Unix.localtime 1702101971.))
+      );
+
+    ]
+
+    let cost_basis_tests = [
+      (* ("cost basis test 1" >:: fun _ ->
+        assert_equal
+        (Some (Api.get_price "MSFT"))
+        (Test_Portfolio.cost_basis add_stock_test_portfolio_1 "MSFT")); *)
+    ]
 let suite =
   "test suite for portfolio.ml, filesys.ml"
   >::: List.flatten
@@ -276,6 +341,8 @@ let suite =
            add_stock_tests;
            remove_stock_tests;
            batches_data_tests;
+           api_tests;
+           cost_basis_tests;
            filesys_tests;
          ]
 

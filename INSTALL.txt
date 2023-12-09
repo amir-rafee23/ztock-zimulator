@@ -1,0 +1,12 @@
+Required libraries:
+
+Each of us are using WSL and dune in order to
+push and pull to git, and to build and exec
+
+unix, str
+opam install lwt 
+opam install yojson 
+opam install cohttp 
+opam install cohttp-lwt-unix
+opam install tls-lwt
+opam install bogue../

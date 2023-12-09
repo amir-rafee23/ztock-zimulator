@@ -1,5 +1,6 @@
 open Unix
 open Api
+open Exception
 
 module String_map : Map.S with type key = string = Map.Make (struct
   type t = string
@@ -14,11 +15,11 @@ module type PortfolioType = sig
   val empty_portfolio : t
   val contains_stock : t -> string -> bool
   val quantity_stock : t -> string -> int
-  val stock_price_over_time : t -> string -> int list
   val add_stock : t -> string -> int -> t
   val remove_stock : t -> string -> int -> t
   val batches_data : t -> string -> string -> (float * int * float) list
-  val display_portfolio : t -> string
+  val cost_basis : t -> string -> float option
+  val display_portfolio : t -> string list
   val display_portfolio_filesys : t -> string list list
 end
 
@@ -84,10 +85,6 @@ module UserPortfolio : UserPortfolioType = struct
     | None -> 0
     (* [stock] in portfolio. *)
     | Some x -> x.quantity
-
-  (* TODO: possibly remove. *)
-  let stock_price_over_time (portfolio : t) (stock : string) : int list =
-    failwith "unimplemented"
 
   let add_stock (portfolio : t) (stock : string) (qty : int) : t =
     (* Precondition. *)
@@ -159,16 +156,13 @@ module UserPortfolio : UserPortfolioType = struct
     (* Check if [stock] is in [portfolio.] *)
     if
       String_map.mem stock portfolio = false
-      (* Not in portfolio. Return unchanged portfolio. *)
-    then portfolio
+      (* Not in portfolio. Raise exception *)
+    then raise TickerNotHeld
     else if
       (* In portfolio. Check if the quantity to be removed exceeds the initial
          quantity. *)
       qty > (String_map.find stock portfolio).quantity
-    then
-      failwith
-        ("Quantity of " ^ stock
-       ^ " to be removed exceeds initial quantity held!")
+    then raise ExceededQuantity
     else
       (* Need to update the stock data. Only quantity, sell_batches are
          changed. *)
@@ -218,54 +212,62 @@ module UserPortfolio : UserPortfolioType = struct
       get_batches_data (String_map.find stock portfolio).buy_batches
     else get_batches_data (String_map.find stock portfolio).sell_batches
 
-  let rec display_portfolio (portfolio : t) : string =
+  let cost_basis (portfolio : t) (stock : string) : float option =
+    match String_map.find_opt stock portfolio with
+    | Some stock_data -> (
+        let calculate_cost acc batch =
+          acc +. (batch.price *. float_of_int batch.quantity)
+        in
+        let buy_batches_cost : float =
+          List.fold_left calculate_cost 0. stock_data.buy_batches
+        in
+        let purchased acc (batch : batches_element_data) : int =
+          acc + batch.quantity
+        in
+        let total_purchased_quantity : int =
+          List.fold_left purchased 0 stock_data.buy_batches
+        in
+        match total_purchased_quantity with
+        | 0 -> None
+        | _ -> Some (buy_batches_cost /. float_of_int total_purchased_quantity))
+    | None -> None
+
+  let rec display_portfolio (portfolio : t) : string list =
     (* Stocks held in [portfolio]. *)
     let stocks = String_map.bindings portfolio in
 
     match stocks with
-    | [] -> "Portfolio is empty."
+    | [] -> [ "Portfolio is empty." ]
     | (stock, data) :: t ->
         (* Data on [stock]. *)
 
         (* Determine the string representation of the epoch initial buy date.
            month/day/year hour:min:sec is the output format. *)
         let local_time = Unix.localtime data.initial_buy_date in
-        let str_date_time =
-          (* TODO: Factor out common code (maybe use map). *)
-
-          (* tm_mon gives the month - 1*)
-          (local_time.tm_mon + 1 |> string_of_int)
-          ^ "/"
-          ^ (local_time.tm_mday |> string_of_int)
-          ^ "/"
-          (*tm_year gives the year - 1900*)
-          ^ (local_time.tm_year + 1900 |> string_of_int)
-          ^ " "
-          ^ (local_time.tm_hour |> string_of_int)
-          ^ ":"
-          ^ (local_time.tm_min |> string_of_int)
-          ^ ":"
-          ^ (local_time.tm_sec |> string_of_int)
-        in
+        let str_date_time = Api.get_time local_time in
 
         let current_price = Api.get_price stock in
 
         let str =
-          Printf.sprintf
-            "STOCK: %s\n\
-             Quantity: %i\n\
-             Current price: $%F\n\
-             Initial buy date: %s\n\
-             Current total holding value: $%F%!\n"
-            stock data.quantity current_price str_date_time
-            (current_price *. float_of_int data.quantity)
+          Printf.
+            [
+              sprintf "STOCK: %s" stock;
+              sprintf "Quantity: %i" data.quantity;
+              sprintf "Current price: $%F" current_price;
+              sprintf "Initial buy date: %s" str_date_time;
+              sprintf "Current total holding value: $%F%!"
+                (current_price *. float_of_int data.quantity);
+              (match cost_basis portfolio stock with
+              | Some f -> sprintf "Cost-basis: $%F%!" f
+              | None -> "No cost-basis available");
+            ]
         in
         (* Handle possibly printing more stocks. *)
         if t = [] then str
         else
           (* More stocks to be printed. *)
           let remaining_portfolio = String_map.remove stock portfolio in
-          str ^ "\n\n" ^ display_portfolio remaining_portfolio
+          str @ [ ""; "" ] @ display_portfolio remaining_portfolio
 
   (* TODO: Make more concise, add test caes. *)
   let rec display_portfolio_filesys (portfolio : t) : string list list =
