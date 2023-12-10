@@ -116,5 +116,4 @@ let get_hr_min t =
   let min = Printf.sprintf "%02d" t.tm_min in
   hr ^ ":" ^ min
 
-let get_time (t: Unix.tm) =
-  (get_yr_m_d t) ^ " " ^ (get_hr_min t)
+let get_time (t : Unix.tm) = get_yr_m_d t ^ " " ^ get_hr_min t

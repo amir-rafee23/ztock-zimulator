@@ -95,32 +95,36 @@ let add_stock_test_portfolio_4 =
 (* Also tests [quantity_stock] and [contains_stock]. *)
 let add_stock_tests =
   [
-    ( " Adding stock s to empty portfolio - presence of s. " >:: fun _ ->
+    ( " Adding stock s to empty\n   portfolio - presence of s. " >:: fun _ ->
       assert_equal true
         (Test_Portfolio.contains_stock add_stock_test_portfolio_1 "MSFT") );
-    ( " Adding stock s to empty portfolio - quantity of s. " >:: fun _ ->
+    ( "\n   Adding stock s to empty portfolio - quantity of s. " >:: fun _ ->
       assert_equal 10
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_1 "MSFT") );
     ( " Adding stock to empty portfolio - presence of absent stock. "
     >:: fun _ ->
       assert_equal false
         (Test_Portfolio.contains_stock add_stock_test_portfolio_1 "XYZ") );
-    ( " Adding new stock s to non-empty portfolio - presence of s. " >:: fun _ ->
+    ( " Adding new stock s to non-empty\n   portfolio - presence of s. "
+    >:: fun _ ->
       assert_equal true
         (Test_Portfolio.contains_stock add_stock_test_portfolio_2 "AAPL") );
-    ( " Adding new stock s to non-empty portfolio - quantity of s. " >:: fun _ ->
+    ( "\n   Adding new stock s to non-empty portfolio - quantity of s. "
+    >:: fun _ ->
       assert_equal 5
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_2 "AAPL") );
-    ( " Adding new stock to non-empty portfolio - quantity of absent stock. "
+    ( " Adding new stock to non-empty portfolio - quantity of absent\n   stock. "
     >:: fun _ ->
       assert_equal 0
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_2 "XYZ") );
-    ( " Adding existing stock s to non-empty portfolio - quantity of s. "
+    ( " Adding existing stock s to non-empty\n   portfolio - quantity of s. "
     >:: fun _ ->
       assert_equal 16
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "MSFT") );
-    ( " Adding existing stock to non-empty portfolio - quantity of unadded \
-       stock unchanged. "
+    ( "\n\
+      \   Adding existing stock to non-empty portfolio - quantity of unadded  \
+       stock\n\
+      \   unchanged. "
     >:: fun _ ->
       assert_equal 5
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "AAPL") );
@@ -183,7 +187,7 @@ let remove_stock_test_portfolio7 =
 
 let remove_stock_tests =
   [
-    ( "Removing a stock s from an portfolio completely" >:: fun _ ->
+    ( "Removing a stock s from an portfolio\n   completely" >:: fun _ ->
       assert_equal false
         (Test_Portfolio.contains_stock
            (Test_Portfolio.remove_stock remove_stock_test_portfolio1 "AAPL" 10)
@@ -195,23 +199,26 @@ let remove_stock_tests =
     >:: fun _ ->
       assert_equal 1
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio5 "AAPL") );
-    ( " Removing a stock s not completely from a non-empty portfolio - \
-       presence of s"
+    ( " Removing a stock s not completely\n\
+      \   from a non-empty portfolio -  presence of s"
     >:: fun _ ->
       assert_equal true
         (Test_Portfolio.contains_stock remove_stock_test_portfolio2 "MSFT") );
-    ( " Removing a stock s not completely from a non-empty portfolio - \
-       quantity of s. "
+    ( "\n\
+      \   Removing a stock s not completely from a non-empty portfolio -  \
+       quantity of\n\
+      \   s. "
     >:: fun _ ->
       assert_equal 3
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio2 "MSFT") );
-    ( " Removing a stock s completely from a non-empty portfolio - quantity of \
-       s."
+    ( " Removing a stock s completely\n\
+      \   from a non-empty portfolio - quantity of  s."
     >:: fun _ ->
       assert_equal 0
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio3 "MSFT") );
-    ( " Removing a stock s completely from a non-empty portfolio - presence of \
-       s. "
+    ( "\n\
+      \   Removing a stock s completely from a non-empty portfolio - presence \
+       of  s. "
     >:: fun _ ->
       assert_equal false
         (Test_Portfolio.contains_stock remove_stock_test_portfolio3 "MSFT") );
@@ -259,7 +266,7 @@ let batches_data_tests =
        order was executed, which we don't have access to.*)
 
     (* TODO: Factor out code into a single helper.*)
-    ( "Single-element buy batch for present stock in single-stock portfolio."
+    ( "Single-element buy batch\n   for present stock in single-stock portfolio."
     >:: fun _ ->
       let batches =
         Test_Portfolio.batches_data batches_data_test_portfolio2 "buy" "AAPL"
@@ -273,7 +280,8 @@ let batches_data_tests =
       in
 
       assert_equal 10 qty );
-    ( "Single-element sell batch for present stock in single-stock portfolio."
+    ( "Single-element sell batch for present stock in\n\
+      \   single-stock portfolio."
     >:: fun _ ->
       let batches =
         Test_Portfolio.batches_data batches_data_test_portfolio3 "sell" "AAPL"
@@ -285,11 +293,11 @@ let batches_data_tests =
       in
 
       assert_equal 5 qty );
-    ( "Buy batch for absent stock in single-stock portfolio." >:: fun _ ->
+    ( "Buy batch for absent stock in single-stock\n   portfolio." >:: fun _ ->
       assert_equal []
         (Test_Portfolio.batches_data batches_data_test_portfolio2 "buy" "MSFT")
     );
-    ( " Sell batch for absent stock in single-stock portfolio." >:: fun _ ->
+    ( " Sell batch for absent stock\n   in single-stock portfolio." >:: fun _ ->
       assert_equal []
         (Test_Portfolio.batches_data batches_data_test_portfolio3 "sell" "META")
     );
@@ -333,7 +341,7 @@ let filesys_tests =
 let api_tests =
   [
     (* Testing for determinable functions *)
-    ( "get_yr_m_d test1" >:: fun _ ->
+    ( "get_yr_m_d\n   test1" >:: fun _ ->
       assert_equal "1970-01-01" (Api.get_yr_m_d (Unix.localtime 40600.)) );
     ( "get_yr_m_d test2" >:: fun _ ->
       assert_equal "2023-12-09" (Api.get_yr_m_d (Unix.localtime 1702108888.)) );
@@ -343,15 +351,193 @@ let api_tests =
       assert_equal "03:09" (Api.get_hr_min (Unix.localtime 1702109368.)) );
     ( "get_time test1" >:: fun _ ->
       assert_equal "1970-01-01 06:06" (Api.get_time (Unix.localtime 40000.)) );
-    ( "get_time test2" >:: fun _ ->
+    ( "get_time\n   test2" >:: fun _ ->
       assert_equal "2023-12-09 01:06"
         (Api.get_time (Unix.localtime 1702101971.)) );
   ]
 
+let cash_portfolio1 : Portfolio.UserPortfolio.t = String_map.empty
+
+let cash_portfolio2 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK1"
+    ({
+       quantity = 0;
+       initial_buy_date = 0.;
+       buy_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+       sell_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    String_map.empty
+
+let cash_portfolio3 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK1"
+    ({
+       quantity = 5;
+       initial_buy_date = 0.;
+       buy_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+       sell_batches = [];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    String_map.empty
+
+let cash_portfolio4 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK1"
+    ({
+       quantity = 0;
+       initial_buy_date = 0.;
+       buy_batches = [ { price = 20.; quantity = 30; date = 0. } ];
+       sell_batches = [ { price = 22.50; quantity = 30; date = 1. } ];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    String_map.empty
+
+let cash_portfolio5 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK3"
+    ({
+       quantity = 8;
+       initial_buy_date = 0.;
+       buy_batches = [ { price = 6.; quantity = 8; date = 0. } ];
+       sell_batches = [];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    (String_map.add "TICK2"
+       ({
+          quantity = 5;
+          initial_buy_date = 0.;
+          buy_batches = [ { price = 55.; quantity = 5; date = 0. } ];
+          sell_batches = [];
+        }
+         : Portfolio.UserPortfolio.stock_data)
+       (String_map.add "TICK1"
+          ({
+             quantity = 5;
+             initial_buy_date = 0.;
+             buy_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+             sell_batches = [];
+           }
+            : Portfolio.UserPortfolio.stock_data)
+          String_map.empty))
+
+let cash_portfolio6 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK3"
+    ({
+       quantity = 0;
+       initial_buy_date = 0.;
+       buy_batches = [ { price = 6.; quantity = 8; date = 0. } ];
+       sell_batches = [ { price = 25.; quantity = 8; date = 3. } ];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    (String_map.add "TICK2"
+       ({
+          quantity = 0;
+          initial_buy_date = 0.;
+          buy_batches = [ { price = 55.; quantity = 5; date = 0. } ];
+          sell_batches = [ { price = 50.; quantity = 5; date = 2. } ];
+        }
+         : Portfolio.UserPortfolio.stock_data)
+       (String_map.add "TICK1"
+          ({
+             quantity = 0;
+             initial_buy_date = 0.;
+             buy_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+             sell_batches =
+               [
+                 { price = 23.; quantity = 2; date = 1. };
+                 { price = 10.; quantity = 3; date = 2. };
+               ];
+           }
+            : Portfolio.UserPortfolio.stock_data)
+          String_map.empty))
+
+let cash_tests =
+  [
+    ( "Calculate cash - empty portfolio" >:: fun _ ->
+      assert_equal Tui.starting_cash (Tui.calculate_cash cash_portfolio1) );
+    ( "Calculate cash - buy and sell stock immediately" >:: fun _ ->
+      assert_equal Tui.starting_cash (Tui.calculate_cash cash_portfolio2) );
+    ( "Calculate cash - buy stock" >:: fun _ ->
+      assert_equal
+        (Tui.starting_cash -. 100.)
+        (Tui.calculate_cash cash_portfolio3) );
+    ( "Calculate cash - buy and sell stock for gain" >:: fun _ ->
+      assert_equal (Tui.starting_cash +. 75.)
+        (Tui.calculate_cash cash_portfolio4) );
+    ( "Calculate cash - buy multiple tickers" >:: fun _ ->
+      assert_equal
+        (Tui.starting_cash -. 423.)
+        (Tui.calculate_cash cash_portfolio5) );
+    ( "Calculate cash - buy and sell multiple tickers" >:: fun _ ->
+      assert_equal
+        (Tui.starting_cash +. 103.)
+        (Tui.calculate_cash cash_portfolio6) );
+  ]
+
+let cost_basis_portfolio1 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK3"
+    ({
+       quantity = 28;
+       initial_buy_date = 0.;
+       buy_batches =
+         [
+           { price = 6.; quantity = 8; date = 0. };
+           { price = 20.; quantity = 15; date = 1. };
+           { price = 10.; quantity = 5; date = 2. };
+         ];
+       sell_batches = [];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    (String_map.add "TICK2"
+       ({
+          quantity = 20;
+          initial_buy_date = 0.;
+          buy_batches =
+            [
+              { price = 60.; quantity = 10; date = 0. };
+              { price = 50.; quantity = 10; date = 1. };
+            ];
+          sell_batches = [];
+        }
+         : Portfolio.UserPortfolio.stock_data)
+       (String_map.add "TICK1"
+          ({
+             quantity = 5;
+             initial_buy_date = 0.;
+             buy_batches = [ { price = 20.; quantity = 5; date = 0. } ];
+             sell_batches = [];
+           }
+            : Portfolio.UserPortfolio.stock_data)
+          String_map.empty))
+
+let cost_basis_portfolio2 : Portfolio.UserPortfolio.t =
+  String_map.add "TICK1"
+    ({
+       quantity = 0;
+       initial_buy_date = 0.;
+       buy_batches = [];
+       sell_batches = [];
+     }
+      : Portfolio.UserPortfolio.stock_data)
+    String_map.empty
+
 let cost_basis_tests =
-  [ (* ("cost basis test 1" >:: fun _ -> assert_equal (Some (Api.get_price
-       "MSFT")) (Test_Portfolio.cost_basis add_stock_test_portfolio_1
-       "MSFT")); *) ]
+  [
+    ( "Cost basis - 1 buy" >:: fun _ ->
+      assert_equal (Some 20.)
+        (Test_Portfolio.cost_basis cost_basis_portfolio1 "TICK1") );
+    ( "Cost basis - 2 buys" >:: fun _ ->
+      assert_equal (Some 55.)
+        (Test_Portfolio.cost_basis cost_basis_portfolio1 "TICK2") );
+    ( "Cost basis - 3 buys" >:: fun _ ->
+      assert_equal 14.
+        (Test_Portfolio.cost_basis cost_basis_portfolio1 "TICK3"
+        |> Option.get |> Float.round) );
+    ( "Cost basis - ticker dne" >:: fun _ ->
+      assert_equal None
+        (Test_Portfolio.cost_basis cost_basis_portfolio1 "TICK4") );
+    ( "Cost basis - no stock bought" >:: fun _ ->
+      assert_equal None
+        (Test_Portfolio.cost_basis cost_basis_portfolio2 "TICK1") );
+  ]
 
 let suite =
   "test suite for portfolio.ml, filesys.ml"
@@ -364,6 +550,7 @@ let suite =
            api_tests;
            cost_basis_tests;
            filesys_tests;
+           cash_tests;
          ]
 
 let _ = run_test_tt_main suite

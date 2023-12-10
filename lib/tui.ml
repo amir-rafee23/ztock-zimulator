@@ -167,9 +167,8 @@ let render_image st =
             <|> create_option "Quit" (st.selected = 5))
     | Display ->
         title st
-        <-> (create_option "Main menu" (st.selected = 0)
-            <-> void 0 1
-            <-> display_list st.portfolio_display)
+        <-> (create_option "Main menu" (st.selected = 0) <-> void 0 1)
+        <-> display_list st.portfolio_display
     | DisplayPaginate i ->
         let lines = st.height - (non_display_lines + 2) in
         let pages = (List.length st.portfolio_display / lines) + 1 in
@@ -183,81 +182,80 @@ let render_image st =
             <|> void 2 0
             <|> create_option "Next" (st.selected = 1)
             <|> void 2 0
-            <|> create_option "Main menu" (st.selected = 2)
-            <-> void 0 1
-            <-> display_list paginated_display
-            <-> void 0 1
-            <-> string
-                  A.(fg white)
-                  ("<Page " ^ (i |> string_of_int) ^ "/"
-                 ^ (pages |> string_of_int) ^ ">"))
+            <|> create_option "Main menu" (st.selected = 2))
+        <-> void 0 1
+        <-> display_list paginated_display
+        <-> void 0 1
+        <-> string
+              A.(fg white)
+              ("<Page " ^ (i |> string_of_int) ^ "/" ^ (pages |> string_of_int)
+             ^ ">")
     | View Ticker ->
         title st
         <-> (create_option "View stock" (st.selected = 0)
             <|> void 2 0
-            <|> create_option "Main menu" (st.selected = 1)
-            <-> void 0 1
-            <-> string A.(fg white) "Enter the ticker:"
-            <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
+            <|> create_option "Main menu" (st.selected = 1))
+        <-> void 0 1
+        <-> string A.(fg white) "Enter the ticker:"
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
     | Buy Ticker | Sell Ticker ->
         title st
         <-> (create_option "Select ticker" (st.selected = 0)
             <|> void 2 0
-            <|> create_option "Main menu" (st.selected = 1)
-            <-> void 0 1
-            <-> string A.(fg white) "Enter the ticker:"
-            <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker))
+            <|> create_option "Main menu" (st.selected = 1))
+        <-> void 0 1
+        <-> string A.(fg white) "Enter the ticker:"
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.ticker)
     | Buy Quantity | Sell Quantity ->
         title st
         <-> (create_option "Select quantity" (st.selected = 0)
             <|> void 2 0
-            <|> create_option "Main menu" (st.selected = 1)
-            <-> void 0 1
-            <-> string A.(fg green) st.ticker
-            <-> string A.(fg white) "Enter the quantity:"
-            <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity))
+            <|> create_option "Main menu" (st.selected = 1))
+        <-> void 0 1
+        <-> string A.(fg green) st.ticker
+        <-> string A.(fg white) "Enter the quantity:"
+        <-> (string A.(fg red) ">" <|> string A.(fg white) st.quantity)
     | Buy Success ->
         title st
-        <-> (create_option "Main menu" (st.selected = 0)
-            <-> void 0 1
-            <-> string A.(fg white) "Congratulations, stock has been bought.")
+        <-> create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg white) "Congratulations, stock has been bought."
     | Sell Success ->
         title st
-        <-> (create_option "Main menu" (st.selected = 0)
-            <-> void 0 1
-            <-> string A.(fg white) "Congratulations, stock has been sold.")
+        <-> create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg white) "Congratulations, stock has been sold."
     | View Success ->
         title st
         <-> (create_option "Buy stock" (st.selected = 0)
             <|> void 2 0
             <|> create_option "Select another ticker" (st.selected = 1)
             <|> void 2 0
-            <|> create_option "Main menu" (st.selected = 2)
-            <-> (void 0 1
-                <-> string A.(fg white) ("Ticker: " ^ st.ticker)
-                <-> string
-                      A.(fg white)
-                      ("Price: $" ^ string_of_float st.data.price)))
+            <|> create_option "Main menu" (st.selected = 2))
+        <-> (void 0 1
+            <-> string A.(fg white) ("Ticker: " ^ st.ticker)
+            <-> string A.(fg white) ("Price: $" ^ string_of_float st.data.price)
+            )
     | Error e ->
         title st
-        <-> (create_option "Main menu" (st.selected = 0)
-            <-> void 0 1
-            <-> string A.(fg red) "ERROR"
-            <-> string A.(fg white) e)
+        <-> create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg red) "ERROR"
+        <-> string A.(fg white) e
     | Reset false ->
         title st
         <-> (create_option "Main menu" (st.selected = 0)
             <|> void 2 0
-            <|> create_option "Confirm Reset" (st.selected = 1)
-            <-> void 0 1
-            <-> string
-                  A.(fg red)
-                  "Are you sure you want to completely reset your portfolio?")
+            <|> create_option "Confirm Reset" (st.selected = 1))
+        <-> void 0 1
+        <-> string
+              A.(fg red)
+              "Are you sure you want to completely reset your portfolio?"
     | Reset true ->
         title st
-        <-> (create_option "Main menu" (st.selected = 0)
-            <-> void 0 1
-            <-> string A.(fg green) "Portfolio has been fully reset!")
+        <-> create_option "Main menu" (st.selected = 0)
+        <-> void 0 1
+        <-> string A.(fg green) "Portfolio has been fully reset!"
     | Quit -> empty)
 
 let arrow_clicked st dir =
