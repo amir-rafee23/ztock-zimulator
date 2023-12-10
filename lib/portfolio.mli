@@ -14,18 +14,6 @@ module type PortfolioType = sig
   val quantity_stock : t -> string -> int
   (** Returns the quantity of a stock held in the portfolio. *)
 
-  (** Returns the prices of a stock over time, specifically, from the most
-      recent time when the stock went from being absent to present in the
-      portfolio, to when this function is called. Returns the empty list if and
-      only if the stock is not in the portfolio. *)
-
-  (* TODO: Add an optional argument [time] to add_stock and remove_stock, mainly
-     to enable better testing.
-
-     Optional argument [time]: the epoch time associated with the stock addition
-     to the portfolio. If an argument not provided, default value is the time
-     the function is called. *)
-
   val add_stock : t -> string -> int -> t
   (** Add a stock and the quantity purchased to the portfolio.
 
@@ -61,10 +49,8 @@ module type PortfolioType = sig
       Requires: first argument is either "buy"/"sell". *)
 
   val cost_basis : t -> string -> float option
-  (** [cost_basis portfolio stock] is the cost-basis of stock [stock] in
-      portfolio [portfolio]*)
+  (** [cost_basis portfolio stock] is the cost-basis of [stock] in [portfolio]*)
 
-  (* TODO: Also display current portfolio's value. Need a function for that.*)
   val display_portfolio : t -> string list
   (** Returns a "pretty-printer" string to display the portfolio. For each stock
       in the portfolio, displays: stock name, quantity, current price, current
@@ -80,15 +66,12 @@ module type PortfolioType = sig
       
       Example output: 
 
-    [
-        ["ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches"];
-        
-        ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}"; ... ;"{pb_m, qb_m, db_m}]"; 
-        "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
-    ]*)
+    [[
+    ["ticker"; "quantity"; "initial buy date"; "buy batches"; "sell batches"];
+    ["AAPL"; "66"; "32423.2"; "[{pb_1, qb_1, db_1}"; ... ;"{pb_m, qb_m, db_m}]"; 
+    "[{ps_1, qs_1, ds_1}; ... ;{ps_n, qs_n, ds_n}"]
+    ]]. *)
 end
-
-(* TODO: possibly include [cost_basis]. *)
 
 module String_map : Map.S with type key = string
 (** A Map whose keys are strings. *)

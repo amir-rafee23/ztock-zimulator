@@ -88,7 +88,6 @@ module UserPortfolio : UserPortfolioType = struct
 
   let add_stock (portfolio : t) (stock : string) (qty : int) : t =
     (* Precondition. *)
-    (* TODO: Add descriptive error message. *)
     assert (qty >= 0);
 
     (* Check if [stock] is in [portfolio]. *)
@@ -269,7 +268,6 @@ module UserPortfolio : UserPortfolioType = struct
           let remaining_portfolio = String_map.remove stock portfolio in
           str @ [ ""; "" ] @ display_portfolio remaining_portfolio
 
-  (* TODO: Make more concise, add test caes. *)
   let rec display_portfolio_filesys (portfolio : t) : string list list =
     let title_row =
       [
@@ -367,12 +365,3 @@ module UserPortfolio : UserPortfolioType = struct
     (* Final output. *)
     batch
 end
-
-(* TODO: *)
-(* Idea is to evenly split the interval between current time and when the stock
-   was most recently added to portfolio to get a series of dates (how many?),
-   then ping the API to get the price at each of those dates and output the
-   results in a list. Returns the empty list only if the stock is not in the
-   portfolio. *)
-
-(* Worry about the cost-basis function later. *)
