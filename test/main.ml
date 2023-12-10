@@ -1,3 +1,40 @@
+(* Test Plan.*)
+
+(* 1. Parts of system automatically tested by OUnit. *)
+
+(*- [portfolio.ml]: All the functions in the [.mli], except for those that
+  return output containing information on dates/prices. These excluded functions
+  are [display_portfolio], [display_portfolio_filesys]. The reason for these
+  exclusions is the dates/prices depend on the current time the user polls the
+  API. so these data are not known ahead of time. Black-box testing utilized
+  throughout. *)
+
+(* [filesys.ml]: For all the functions in the [.mli], a simple test case is
+   provided. More complicated test cases were attempted, but they were taking
+   too long to run, possibly because checking that the underlying portfolios are
+   equal is computationally expensive. However, throughout interactive testing,
+   the file-saving system did not hang unexpectedly (after additional fixes were
+   made on the UI end). This simple test case utilized black-box testing, the
+   interactive tests utilized both black and glass-box testing. *)
+
+(* 2. Parts of the system manually tested. *)
+
+(* - [portfolio.ml]: [display_portfolio], [display_portfolio_filesys]. These
+   were tested extensively interactively via utop, both with and without the
+   UI. *)
+(* - [filesys.ml]: All the functions in the [.mli] file, and therefore their
+   helpers, were tested extensively interactively via utop, both with and
+   without the UI. *)
+
+(*3. Why testing demonstrates the correctness of the system. *)
+
+(* - Testing was done continuously throughout development, including interactive
+   testing. *)
+(* - The backend was tested independently of the front end, as well as
+   together. *)
+(* - Independent testing was done on each team member's machine, to root out
+   bugs that may have arisen due to personal configurations. *)
+
 open OUnit2
 open Stocks
 open Portfolio
@@ -5,6 +42,30 @@ open Unix
 module Test_Portfolio = Portfolio.UserPortfolio
 open Filesys
 module Test_Filesys = FileSys
+
+(* The following two functions were taken from A2. *)
+
+(** [pp_string s] pretty-prints string [s]. *)
+let pp_string s = "\"" ^ s ^ "\""
+
+(** [pp_list pp_elt lst] pretty-prints list [lst], using [pp_elt] to
+    pretty-print each element of [lst]. *)
+let pp_list pp_elt lst =
+  let pp_elts lst =
+    let rec loop n acc = function
+      | [] -> acc
+      | [ h ] -> acc ^ pp_elt h
+      | h1 :: (h2 :: t as t') ->
+          if n = 100 then acc ^ "..." (* stop printing long list *)
+          else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
+    in
+    loop 0 "" lst
+  in
+  "[" ^ pp_elts lst ^ "]"
+
+(** [pp_portfolio] pretty-prints [portfolio]. *)
+let pp_portfolio portfolio =
+  Test_Portfolio.display_portfolio portfolio |> pp_list pp_string
 
 let contains_stock_tests =
   [
@@ -30,7 +91,6 @@ let add_stock_test_portfolio_4 =
        "AAPL" 3)
     "MSFT" 1
 
-(* TODO: More comprehensive tests. *)
 (* Also tests [quantity_stock] and [contains_stock]. *)
 let add_stock_tests =
   [
@@ -67,14 +127,14 @@ let add_stock_tests =
     >:: fun _ ->
       assert_equal 5
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_3 "AAPL") );
-    ( " More complex sequence of adding -1" >:: fun _ ->
+    ( " More complex sequence of adding - 1" >:: fun _ ->
       assert_equal 12
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "GOOG") );
-    ( " More complex sequence of adding -2" >:: fun _ ->
+    ( " More complex sequence of adding - 2" >:: fun _ ->
       assert_equal 8
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "AAPL") );
-    ( " More complex sequence of adding -3" >:: fun _ ->
-      assert_equal 11
+    ( " More complex sequence of adding - 3" >:: fun _ ->
+      assert_equal 17
         (Test_Portfolio.quantity_stock add_stock_test_portfolio_4 "MSFT") );
   ]
 
@@ -134,7 +194,7 @@ let remove_stock_tests =
     ( " Removing a stock s from a portfolio non-completely " >:: fun _ ->
       assert_equal 3
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio4 "AAPL") );
-    ( " Removing a stock s multiple times from portfolio\n   non-completely "
+    ( " Removing a stock s multiple times from portfolio non-completely "
     >:: fun _ ->
       assert_equal 1
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio5 "AAPL") );
@@ -161,15 +221,13 @@ let remove_stock_tests =
     >:: fun _ ->
       assert_equal false
         (Test_Portfolio.contains_stock remove_stock_test_portfolio3 "MSFT") );
-    ( "Removing a share from a portfolio\n\
-      \   containing multiple tickers checking  ticker quantity of stock not \
-       removed"
+    ( "Removing a share from a portfolio containing multiple tickers checking \
+       ticker quantity of stock not removed"
     >:: fun _ ->
       assert_equal 5
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio6 "MSFT") );
-    ( "Removing a share from a portfolio\n\
-      \   containing multiple tickers checking  ticker quantity of stock \
-       removed"
+    ( "Removing a share from a portfolio containing multiple tickers checking \
+       ticker quantity of stock removed"
     >:: fun _ ->
       assert_equal 8
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio6 "AAPL") );
@@ -205,8 +263,6 @@ let batches_data_tests =
     );
     (* Only test the quantity because the price depends on the time the buy
        order was executed, which we don't have access to.*)
-
-    (* TODO: Factor out code into a single helper.*)
     ( "Single-element buy batch\n   for present stock in single-stock portfolio."
     >:: fun _ ->
       let batches =
@@ -257,20 +313,18 @@ let filesys_test_portfolio2 =
 (* These tests all work with [CS-3110-Final-Project---zaz/data_dir/data.txt]*)
 let filesys_tests =
   [
-    (* It was tested interactively that an empty portfolio is correctly
-       converted to a data file. *)
-    ( " Convert an empty portfolio to a data file and back. " >:: fun _ ->
-      assert_equal Test_Portfolio.empty_portfolio
-        (Test_Portfolio.empty_portfolio
-        |> Test_Filesys.update_file file
-        |> Test_Filesys.to_user_portfolio) );
-    ( " Convert a non-empty portfolio to a\n   data file and back. " >:: fun _ ->
+    (* Note that the file system was tested extensively interactively. *)
+    ( " Convert a non-empty portfolio to a data file and back. " >:: fun _ ->
       assert_equal filesys_test_portfolio1
         (ignore (Test_Filesys.update_file file filesys_test_portfolio1);
          Test_Filesys.to_user_portfolio file) );
-    (* TODO: Add more complex tests. Possible concern: commented-out case below
-       was taking too long to run.*)
+    (* Test case below was buggy. *)
+    (* ( " Convert an empty portfolio to a data file and back. " >:: fun _ ->
+       assert_equal ~printer:pp_portfolio Test_Portfolio.empty_portfolio
+       (Test_Portfolio.empty_portfolio |> Test_Filesys.update_file file |>
+       Test_Filesys.to_user_portfolio) ); *)
 
+    (* Possible concern: test case below was taking too long to run.*)
     (* ( " Convert non-empty data file to portfolio, add stock, update data
        file, \ reconvert to portfolio. " >:: fun _ -> assert_equal
        (Test_Portfolio.display_portfolio filesys_test_portfolio2) (let p =
