@@ -28,6 +28,11 @@
 (* - [tui.ml]: Apart from [calculate_cash], all the UI helper functions were
    manually tested by running [make run] on the terminal and navigating through
    various screens and actions*)
+(* - [api.ml]: Apart from the functions dealing with system time, all API
+      functionalities were testing either directly through api.ml or through 
+      [make run] in the terminal, and ensuring that all purchases and sales
+      matched expected values, and that displaying functions accurately
+      displayed all required information in the necessary formatting.*)
 
 (*3. Why testing demonstrates the correctness of the system. *)
 
