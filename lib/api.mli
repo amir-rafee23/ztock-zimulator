@@ -1,3 +1,5 @@
+(** [Api] has functions relating to retrieving and processing stock API data*)
+
 val ping_id : string -> unit -> Yojson.Basic.t
 (** Pings an API to return the Yojson.Basic.t json representation allowing for
     scraping, for intraday trading*)

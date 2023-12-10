@@ -1,3 +1,6 @@
+(** [Portfolio] has functions related to how stock and portfolio data is stored
+    and retrieved*)
+
 (** The general signature of a user's portfolio. *)
 module type PortfolioType = sig
   type t

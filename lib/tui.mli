@@ -1,3 +1,5 @@
+(** [Tui] has functions related to the terminal UI for the application*)
+
 type transaction_step
 type view_step
 type screen

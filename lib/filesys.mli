@@ -1,6 +1,7 @@
 open Portfolio
 
-(** The user's portfolio data is stored in
+(** [Filesys] has functions relating to the storing and retrieving of data from
+    a text file. The user's portfolio data is stored in
     [CS-3110-Final-Project---zaz/data_dir/data.txt]. Ensure this
     data_dir/data.txt location exists before running the file system. *)
 
