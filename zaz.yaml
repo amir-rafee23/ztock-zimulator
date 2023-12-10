@@ -25,10 +25,10 @@ desc: >
   makes it possible to see just how well your trading strategies perform before 
   you actually deploy your capital and wreak havoc on markets!
 
-  Specifically, users will be able to buy and add stocks to their portfolio, track  
-  its value over time, and visualize their portfolio graphically, such as contrasting
-  performance with benchmark indices. All these features are deployed through 
-  a GUI, and do not involve real capital, 
+  Specifically, users will be able to buy and add stocks to their portfolio 
+  using a finite amount of cash, track its value over time, and view how the 
+  value of their portfolio is affected. All these features are deployed through 
+  a terminal UI, and do not involve real capital, 
 
   And so, keep your bank account safe and healthy, with Zazzy, the Ztock Zimulator!
 
