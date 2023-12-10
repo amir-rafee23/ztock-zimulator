@@ -25,9 +25,6 @@
 (* - [filesys.ml]: All the functions in the [.mli] file, and therefore their
    helpers, were tested extensively interactively via utop, both with and
    without the UI. *)
-(* - [tui.ml]: Apart from [calculate_cash], all the UI helper functions were
-   manually tested by running [make run] on the terminal and navigating through
-   various screens and actions*)
 
 (*3. Why testing demonstrates the correctness of the system. *)
 
@@ -45,6 +42,7 @@ open Unix
 module Test_Portfolio = Portfolio.UserPortfolio
 open Filesys
 module Test_Filesys = FileSys
+open Exception
 
 (* The following two functions were taken from A2. *)
 
@@ -243,6 +241,14 @@ let remove_stock_tests =
     ( "Test of add/remove sequence test" >:: fun _ ->
       assert_equal 12
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio7 "GOOG") );
+    ( "removing stock that is not in portfolio" >:: fun _ ->
+      assert_raises (TickerNotHeld) 
+      (fun _ -> Test_Portfolio.remove_stock remove_stock_test_portfolio1 
+      "TSLA" 6));
+    ( "removing too many shares of stock that in portfolio" >:: fun _ ->
+      assert_raises (ExceededQuantity) 
+      (fun _ -> Test_Portfolio.remove_stock remove_stock_test_portfolio1 
+      "AAPL" 60));
   ]
 
 (* Portfolios used to test [batches_data].*)
