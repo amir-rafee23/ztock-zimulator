@@ -25,6 +25,9 @@
 (* - [filesys.ml]: All the functions in the [.mli] file, and therefore their
    helpers, were tested extensively interactively via utop, both with and
    without the UI. *)
+(* - [tui.ml]: Apart from [calculate_cash], all the UI helper functions were
+   manually tested by running [make run] on the terminal and navigating through
+   various screens and actions*)
 
 (*3. Why testing demonstrates the correctness of the system. *)
 
