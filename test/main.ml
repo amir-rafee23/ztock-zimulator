@@ -32,8 +32,8 @@
    testing. *)
 (* - The backend was tested independently of the front end, as well as
    together. *)
-(* Independent testing was done on each team member's machine, to root out bugs
-   that may have arisen due to personal configurations. *)
+(* - Independent testing was done on each team member's machine, to root out
+   bugs that may have arisen due to personal configurations. *)
 
 open OUnit2
 open Stocks
