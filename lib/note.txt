@@ -1,6 +1,0 @@
-Idea for save functionality:
-
-- Enable user to open a new file that saves and records data regarding their 
-stock transactions.
-- Thus, when application is opened up in the future, this file, and hence, 
-the user's data, can be loaded. User can pick up where they left off.

@@ -13,3 +13,5 @@ If the above doesn't work, then run:
 # Run application
 - `make build`
 - `make run`
+
+NOTE: The app was tested using a VM and worked as expected. 

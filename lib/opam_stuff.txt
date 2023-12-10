@@ -1,8 +1,0 @@
-Opam installations that are required (mainly due to api.ml)
-
-1. opam install cohttp-lwt-unix
-2. opam install tls-lwt
-
-Remaining packages used are the standard ones used by cs3110 (detailed below; taken from the OCaml installation instructions in the textbook)
-
-opam install -y utop odoc ounit2 qcheck bisect_ppx menhir ocaml-lsp-server ocamlformat ocamlformat-rpc
