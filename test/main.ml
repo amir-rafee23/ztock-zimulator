@@ -2,20 +2,24 @@
 
 (* 1. Parts of system automatically tested by OUnit. *)
 
-(*- [portfolio.ml]: All the functions in the [.mli], except for those that
-  return output containing information on dates/prices. These excluded functions
-  are [display_portfolio], [display_portfolio_filesys]. The reason for these
-  exclusions is the dates/prices depend on the current time the user polls the
-  API. so these data are not known ahead of time. Black-box testing utilized
-  throughout. *)
+(* - [portfolio.ml]: All the functions in the [.mli], except for those that
+   return output containing information on dates/prices. These excluded
+   functions are [display_portfolio], [display_portfolio_filesys]. The reason
+   for these exclusions is the dates/prices depend on the current time the user
+   polls the API. so these data are not known ahead of time. Black-box testing
+   utilized throughout. *)
 
-(* [filesys.ml]: For all the functions in the [.mli], a simple test case is
+(* - [filesys.ml]: For all the functions in the [.mli], a simple test case is
    provided. More complicated test cases were attempted, but they were taking
    too long to run, possibly because checking that the underlying portfolios are
    equal is computationally expensive. However, throughout interactive testing,
    the file-saving system did not hang unexpectedly (after additional fixes were
    made on the UI end). This simple test case utilized black-box testing, the
    interactive tests utilized both black and glass-box testing. *)
+
+(* - [tui.ml]: The [calculate_cost] function were tested by Ounit, using
+   glass-box testing to test the various cases that the function would be used
+   for. *)
 
 (* 2. Parts of the system manually tested. *)
 
@@ -29,10 +33,10 @@
    manually tested by running [make run] on the terminal and navigating through
    various screens and actions*)
 (* - [api.ml]: Apart from the functions dealing with system time, all API
-      functionalities were testing either directly through api.ml or through 
-      [make run] in the terminal, and ensuring that all purchases and sales
-      matched expected values, and that displaying functions accurately
-      displayed all required information in the necessary formatting.*)
+   functionalities were testing either directly through api.ml or through [make
+   run] in the terminal, and ensuring that all purchases and sales matched
+   expected values, and that displaying functions accurately displayed all
+   required information in the necessary formatting.*)
 
 (*3. Why testing demonstrates the correctness of the system. *)
 
@@ -250,13 +254,11 @@ let remove_stock_tests =
       assert_equal 12
         (Test_Portfolio.quantity_stock remove_stock_test_portfolio7 "GOOG") );
     ( "removing stock that is not in portfolio" >:: fun _ ->
-      assert_raises (TickerNotHeld) 
-      (fun _ -> Test_Portfolio.remove_stock remove_stock_test_portfolio1 
-      "TSLA" 6));
+      assert_raises TickerNotHeld (fun _ ->
+          Test_Portfolio.remove_stock remove_stock_test_portfolio1 "TSLA" 6) );
     ( "removing too many shares of stock that in portfolio" >:: fun _ ->
-      assert_raises (ExceededQuantity) 
-      (fun _ -> Test_Portfolio.remove_stock remove_stock_test_portfolio1 
-      "AAPL" 60));
+      assert_raises ExceededQuantity (fun _ ->
+          Test_Portfolio.remove_stock remove_stock_test_portfolio1 "AAPL" 60) );
   ]
 
 (* Portfolios used to test [batches_data].*)
