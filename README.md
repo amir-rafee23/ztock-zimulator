@@ -9,7 +9,7 @@ CS3110 Final Project - zsj5 zar7 mb2563
 ## Libraries to install
 - `opam install cohttp-lwt-unix`
 - `opam install tls-lwt`
-- `opam install bogue`
+- `opam install notty`
 
 If the above doesn't work, then run:
 
@@ -17,3 +17,5 @@ If the above doesn't work, then run:
 - `opam install yojson`
 - `opam install cohttp`
 - `opam install lwt_ssl`
+
+NOTE: The app was tested using a VM and worked as expected. 
